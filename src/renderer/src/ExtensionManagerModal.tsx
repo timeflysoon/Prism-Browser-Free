@@ -1,5 +1,5 @@
-import { DeleteOutlined, FolderAddOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, List, Modal, Popconfirm, Space, Spin, Tag, Typography, message } from 'antd'
+import { DeleteOutlined, EditOutlined, FolderAddOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Alert, Button, List, Modal, Popconfirm, Space, Spin, Switch, Tag, Typography, message } from 'antd'
 import { useEffect, useState } from 'react'
 import type { BrowserExtension } from '../../shared/types'
 
@@ -17,7 +17,9 @@ function errorText(error: unknown): string {
 export function ExtensionManagerModal({ open, extensions, onClose, onChanged }: ExtensionManagerModalProps) {
   const [loading, setLoading] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [opening, setOpening] = useState<string | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
+  const [toggling, setToggling] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
 
   async function refresh(): Promise<void> {
@@ -62,6 +64,33 @@ export function ExtensionManagerModal({ open, extensions, onClose, onChanged }: 
     }
   }
 
+  async function openSourceFolder(extension: BrowserExtension): Promise<void> {
+    setOpening(extension.id)
+    try {
+      await window.browserApi.extensions.openSourceFolder(extension.id)
+      messageApi.info('已定位到当前扩展的 manifest.json；修改完成后请关闭并重新打开相关环境')
+    } catch (error) {
+      messageApi.error(errorText(error))
+    } finally {
+      setOpening(null)
+    }
+  }
+
+  async function setGlobalEnabled(extension: BrowserExtension, enabled: boolean): Promise<void> {
+    setToggling(extension.id)
+    try {
+      const updated = await window.browserApi.extensions.setGlobalEnabled(extension.id, enabled)
+      onChanged(extensions.map((item) => item.id === updated.id ? updated : item))
+      messageApi.success(enabled
+        ? `扩展“${extension.name}”已对所有环境启用；重新打开运行中的环境后生效`
+        : `扩展“${extension.name}”已取消全局启用；重新打开运行中的环境后生效`)
+    } catch (error) {
+      messageApi.error(errorText(error))
+    } finally {
+      setToggling(null)
+    }
+  }
+
   return (
     <Modal open={open} title="浏览器扩展" width={720} footer={null} onCancel={onClose} destroyOnHidden>
       {contextHolder}
@@ -84,6 +113,13 @@ export function ExtensionManagerModal({ open, extensions, onClose, onChanged }: 
           locale={{ emptyText: '尚未导入浏览器扩展' }}
           renderItem={(extension) => (
             <List.Item actions={[
+              <Button
+                key="edit"
+                type="text"
+                icon={<EditOutlined />}
+                loading={opening === extension.id}
+                onClick={() => void openSourceFolder(extension)}
+              >编辑</Button>,
               <Popconfirm
                 key="remove"
                 title={`移除扩展“${extension.name}”？`}
@@ -93,7 +129,16 @@ export function ExtensionManagerModal({ open, extensions, onClose, onChanged }: 
                 onConfirm={() => remove(extension)}
               >
                 <Button danger type="text" icon={<DeleteOutlined />} loading={removing === extension.id}>移除</Button>
-              </Popconfirm>
+              </Popconfirm>,
+              <Space key="global-enabled" size={6}>
+                <Typography.Text type="secondary">全局启用</Typography.Text>
+                <Switch
+                  size="small"
+                  checked={extension.globalEnabled}
+                  loading={toggling === extension.id}
+                  onChange={(enabled) => void setGlobalEnabled(extension, enabled)}
+                />
+              </Space>
             ]}>
               <List.Item.Meta
                 title={<Space><span>{extension.name}</span><Tag>v{extension.version}</Tag></Space>}
@@ -108,6 +153,9 @@ export function ExtensionManagerModal({ open, extensions, onClose, onChanged }: 
           )}
         />
       </Spin>
+      <Typography.Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
+        “全局启用”会让所有现有及以后新建的环境加载该扩展；扩展开关或源码修改需关闭并重新打开环境后生效。
+      </Typography.Paragraph>
     </Modal>
   )
 }

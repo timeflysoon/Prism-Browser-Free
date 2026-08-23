@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { readFile, stat, writeFile } from 'node:fs/promises'
+import { lstat, readFile, stat, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import type { ProfileDraft } from '../shared/types'
 import type { KernelManager } from './kernel-manager'
 import { listBundledBrowsers, locateBrowser, locateBundledBrowser, normalizeBrowserSelection } from './browser-locator'
@@ -407,6 +408,20 @@ export function registerIpc({ profiles, settings, launcher, kernels, extensions,
     const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options)
     if (result.canceled || !result.filePaths[0]) return null
     return extensions.importDirectory(result.filePaths[0])
+  })
+  ipcMain.handle('extensions:open-source-folder', async (_event, id: string) => {
+    const path = extensions.sourcePath(id)
+    const info = await lstat(path)
+    if (!info.isDirectory() || info.isSymbolicLink()) throw new Error('扩展源码目录不存在或不安全')
+    const manifestPath = join(path, 'manifest.json')
+    const manifestInfo = await lstat(manifestPath)
+    if (!manifestInfo.isFile() || manifestInfo.isSymbolicLink()) throw new Error('扩展源码缺少有效的 manifest.json')
+    shell.showItemInFolder(manifestPath)
+    logger.info('已打开扩展源码目录', { extensionId: id })
+    return path
+  })
+  ipcMain.handle('extensions:set-global-enabled', (_event, id: string, enabled: boolean) => {
+    return extensions.setGlobalEnabled(id, enabled)
   })
   ipcMain.handle('extensions:remove', async (_event, id: string) => {
     if (await profiles.usesExtension(id)) throw new Error('该扩展仍被浏览器环境使用，请先从环境配置中移除')

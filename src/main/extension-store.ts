@@ -49,7 +49,11 @@ export class ExtensionStore {
         const metadata = JSON.parse(await readFile(join(this.root, entry.name, 'metadata.json'), 'utf8')) as BrowserExtension
         if (metadata.id !== entry.name || !/^[a-f\d-]{36}$/i.test(metadata.id)) throw new Error('扩展元数据 ID 无效')
         await access(join(this.root, entry.name, 'extension', 'manifest.json'))
-        this.extensions.set(metadata.id, { ...metadata, path: join(this.root, entry.name, 'extension') })
+        this.extensions.set(metadata.id, {
+          ...metadata,
+          globalEnabled: metadata.globalEnabled === true,
+          path: join(this.root, entry.name, 'extension')
+        })
       } catch (error) {
         this.logger?.error('忽略不完整的本地扩展', { id: entry.name, error: error instanceof Error ? error.message : String(error) })
       }
@@ -61,11 +65,22 @@ export class ExtensionStore {
   }
 
   paths(ids: string[]): string[] {
-    return ids.map((id) => {
+    const resolvedIds = [...new Set([
+      ...ids,
+      ...this.list().filter((extension) => extension.globalEnabled).map((extension) => extension.id)
+    ])]
+    return resolvedIds.map((id) => {
       const extension = this.extensions.get(id)
       if (!extension) throw new Error(`环境引用的扩展 ${id.slice(0, 8)} 不存在，请编辑环境配置`)
       return extension.path
     })
+  }
+
+  sourcePath(id: string): string {
+    if (typeof id !== 'string' || !/^[a-f\d-]{36}$/i.test(id)) throw new Error('浏览器扩展 ID 无效')
+    const extension = this.extensions.get(id)
+    if (!extension) throw new Error('浏览器扩展不存在')
+    return extension.path
   }
 
   async importDirectory(sourceInput: string): Promise<BrowserExtension> {
@@ -102,7 +117,8 @@ export class ExtensionStore {
         description: typeof manifest.description === 'string' ? manifest.description.trim() : '',
         manifestVersion: manifest.manifest_version,
         installedAt: new Date().toISOString(),
-        path: join(target, 'extension')
+        path: join(target, 'extension'),
+        globalEnabled: false
       }
       await writeFile(join(staging, 'metadata.json'), JSON.stringify(extension, null, 2), { encoding: 'utf8', mode: 0o600 })
       await rename(staging, target)
@@ -122,6 +138,18 @@ export class ExtensionStore {
     await rename(join(this.root, id), join(recycle, `${id}-${Date.now()}`))
     this.extensions.delete(id)
     this.logger?.info('浏览器扩展已移入回收目录', { extensionId: id })
+  }
+
+  async setGlobalEnabled(id: string, enabled: boolean): Promise<BrowserExtension> {
+    if (typeof id !== 'string' || !/^[a-f\d-]{36}$/i.test(id)) throw new Error('浏览器扩展 ID 无效')
+    if (typeof enabled !== 'boolean') throw new Error('扩展全局启用状态无效')
+    const current = this.extensions.get(id)
+    if (!current) throw new Error('浏览器扩展不存在')
+    const next = { ...current, globalEnabled: enabled }
+    await writeFile(join(this.root, id, 'metadata.json'), JSON.stringify(next, null, 2), { encoding: 'utf8', mode: 0o600 })
+    this.extensions.set(id, next)
+    this.logger?.info(enabled ? '浏览器扩展已全局启用' : '浏览器扩展已取消全局启用', { extensionId: id })
+    return { ...next }
   }
 
   async rollbackMigrationImports(ids: string[]): Promise<void> {

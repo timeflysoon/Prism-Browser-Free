@@ -33,12 +33,35 @@ describe('ExtensionStore', () => {
     const extension = await store.importDirectory(source)
     expect(extension.name).toBe('Test Extension')
     expect(extension.manifestVersion).toBe(3)
+    expect(extension.globalEnabled).toBe(false)
     expect(store.paths([extension.id])).toEqual([extension.path])
+    expect(store.sourcePath(extension.id)).toBe(extension.path)
+    expect(() => store.sourcePath('../invalid')).toThrow('ID 无效')
     await expect(access(join(extension.path, 'manifest.json'))).resolves.toBeUndefined()
 
     await store.remove(extension.id)
     expect(store.list()).toEqual([])
     await expect(access(extension.path)).rejects.toThrow()
+  })
+
+  it('persists global enablement and merges it with profile-specific selections', async () => {
+    const { vault, source } = await fixture()
+    const store = new ExtensionStore(vault)
+    await store.initialize()
+    const extension = await store.importDirectory(source)
+
+    const enabled = await store.setGlobalEnabled(extension.id, true)
+    expect(enabled.globalEnabled).toBe(true)
+    expect(store.paths([])).toEqual([extension.path])
+    expect(store.paths([extension.id])).toEqual([extension.path])
+
+    const reloaded = new ExtensionStore(vault)
+    await reloaded.initialize()
+    expect(reloaded.list()[0].globalEnabled).toBe(true)
+    expect(reloaded.paths([])).toEqual([extension.path])
+
+    await reloaded.setGlobalEnabled(extension.id, false)
+    expect(reloaded.paths([])).toEqual([])
   })
 
   it.skipIf(process.platform === 'win32')('rejects extension directories containing symbolic links', async () => {

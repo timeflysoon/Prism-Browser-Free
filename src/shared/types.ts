@@ -209,6 +209,8 @@ export interface BrowserExtension {
   manifestVersion: 2 | 3
   installedAt: string
   path: string
+  /** Loads this extension in every profile in addition to profile-specific selections. */
+  globalEnabled: boolean
 }
 
 export interface AppSettings {
@@ -518,6 +520,8 @@ export interface BrowserApi {
   extensions: {
     list: () => Promise<BrowserExtension[]>
     importDirectory: () => Promise<BrowserExtension | null>
+    openSourceFolder: (id: string) => Promise<string>
+    setGlobalEnabled: (id: string, enabled: boolean) => Promise<BrowserExtension>
     remove: (id: string) => Promise<void>
   }
 }

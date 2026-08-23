@@ -66,6 +66,7 @@ import { McpModal } from './McpModal'
 import { effectiveNetworkIdentity, geoConflictConfirmationMessage } from '../../shared/network-identity'
 import { kernelRequiresPro } from '../../shared/kernel-policy'
 import { orderBatchLaunchProfiles, waitForBatchLaunchGap } from './batch-launch-order'
+import { profileTableSorters } from './profile-table-sort'
 
 const { Sider, Content } = Layout
 
@@ -760,6 +761,7 @@ export default function App() {
       title: '环境',
       dataIndex: 'name',
       width: 250,
+      sorter: profileTableSorters.environment,
       render: (_value, profile) => (
         <div className="profile-name-cell">
           <span className="profile-dot" style={{ background: profile.color }} />
@@ -782,6 +784,7 @@ export default function App() {
       title: '分组 / 标签',
       key: 'classification',
       width: 190,
+      sorter: profileTableSorters.classification,
       render: (_value, profile) => (
         <div className="profile-tags">
           <Tag icon={<FolderOutlined />}>{profile.group || '未分组'}</Tag>
@@ -794,12 +797,14 @@ export default function App() {
       title: '状态',
       dataIndex: 'status',
       width: 100,
+      sorter: profileTableSorters.status,
       render: (_value, profile) => statusTag(profile)
     },
     {
       title: '代理',
       dataIndex: 'proxy',
       width: 220,
+      sorter: profileTableSorters.proxy,
       render: (_value, profile) => (
         <div className="proxy-cell">
           <div>{profile.proxy.protocol === 'direct'
@@ -813,6 +818,7 @@ export default function App() {
       title: '指纹',
       dataIndex: 'fingerprint',
       width: 230,
+      sorter: profileTableSorters.fingerprint,
       render: (_value, profile) => (
         <div className="fingerprint-cell">
           <span>{profile.fingerprint.platform === 'windows' ? 'Windows' : 'macOS'}</span>
@@ -831,6 +837,7 @@ export default function App() {
       title: '种子',
       dataIndex: ['fingerprint', 'seed'],
       width: 125,
+      sorter: profileTableSorters.seed,
       render: (seed: number) => <code className="seed-code">{seed}</code>
     },
     {
