@@ -149,9 +149,7 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   const current = launcher
   launcher = null
-  void Promise.allSettled([scheduler?.shutdown() ?? Promise.resolve(), mcp?.shutdown() ?? Promise.resolve()]).then(() => Promise.allSettled([
-    current.closeAll(), automation?.stop(false) ?? Promise.resolve()
-  ])).finally(async () => {
+  void current.closeAll().finally(async () => {
     logger?.info('Prism Browser 已退出')
     await appSession?.complete().catch((error) => logger?.error('清理应用会话标记失败', error))
     await logger?.flush()
