@@ -145,25 +145,6 @@ button, input, textarea { font: inherit; }
 .workspace-migration-modal .ant-alert { border: 0; border-radius: 12px; background: #f5f7fb; }
 .workspace-migration-modal .ant-input-affix-wrapper { margin-top: 8px; }
 .workspace-migration-modal .ant-radio-group { display: block; margin-top: 10px; }
-.scheduler-modal .ant-modal-content { border-radius: 16px; }
-.scheduler-modal .ant-alert { border: 0; border-radius: 12px; }
-.scheduler-toolbar { display: flex; align-items: center; justify-content: space-between; }
-.scheduler-list { display: flex; flex-direction: column; gap: 9px; max-height: 430px; overflow-y: auto; }
-.scheduler-task { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: flex-start; padding: 13px; border: 1px solid #e3e8f0; border-radius: 12px; background: #fff; }
-.scheduler-task.disabled { opacity: .68; background: #f8f9fb; }
-.scheduler-task > .ant-switch { margin-top: 3px; }
-.scheduler-task-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.scheduler-task-title { display: flex; align-items: center; gap: 7px; }
-.scheduler-task-main > span, .scheduler-task-main > small { overflow: hidden; color: #667087; text-overflow: ellipsis; white-space: nowrap; }
-.scheduler-task-main > small { font-size: 11px; }
-.scheduler-task-main .task-error { color: #c84c4c; }
-.scheduler-task-actions { display: flex; align-items: center; gap: 6px; }
-.scheduler-empty { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 42px; color: #8790a4; border: 1px dashed #d9dfe9; border-radius: 12px; }
-.scheduler-empty > .anticon { font-size: 28px; color: #aab3c4; }
-.scheduler-empty strong { color: #515c72; }
-.scheduler-form { display: flex; flex-direction: column; gap: 13px; padding-top: 8px; }
-.scheduler-form label { display: flex; flex-direction: column; gap: 6px; color: #535e73; font-size: 12px; font-weight: 600; }
-.scheduler-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .mcp-modal .ant-modal-content { border-radius: 16px; }
 .mcp-modal .ant-alert { border: 0; border-radius: 12px; }
 .mcp-status-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
