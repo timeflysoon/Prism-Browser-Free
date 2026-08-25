@@ -406,13 +406,6 @@ export interface BrowserApi {
     sessionHealth: () => Promise<AppRecoveryStatus>
     e2eQuit: () => Promise<void>
   }
-  licensing: {
-    status: () => Promise<LicenseStatus>
-    sync: () => Promise<LicenseStatus>
-    activate: (activationCode: string) => Promise<LicenseStatus>
-    deactivate: () => Promise<LicenseStatus>
-    onChanged: (listener: (status: LicenseStatus) => void) => () => void
-  }
   extensions: {
     list: () => Promise<BrowserExtension[]>
     importDirectory: () => Promise<BrowserExtension | null>
