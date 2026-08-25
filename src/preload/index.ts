@@ -86,7 +86,6 @@ const api: BrowserApi = {
     sync: () => ipcRenderer.invoke('licensing:sync'),
     activate: (activationCode: string) => ipcRenderer.invoke('licensing:activate', activationCode),
     deactivate: () => ipcRenderer.invoke('licensing:deactivate'),
-    openPurchase: () => ipcRenderer.invoke('licensing:open-purchase'),
     onChanged: (listener) => {
       const handler = (_event: Electron.IpcRendererEvent, status: Parameters<typeof listener>[0]) => listener(status)
       ipcRenderer.on('licensing:changed', handler)
