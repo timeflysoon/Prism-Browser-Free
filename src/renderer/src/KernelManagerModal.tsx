@@ -187,14 +187,10 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
           renderItem={(release) => {
             const active = currentVersion === release.version
             const bundledRelease = release.origin === 'bundled'
-            const proKernel = kernelRequiresPro(release.version)
-            const proLocked = proKernel && !proActive
             const actions: ReactNode[] = [
               active
                 ? <Tag key="active" color="success" icon={<CheckCircleFilled />}>正在使用</Tag>
-                : <Button key="use" disabled={proLocked} onClick={() => void activate(release.version)}>
-                    {proLocked ? '升级 Pro 后使用' : '切换使用'}
-                  </Button>
+                : <Button key="use" onClick={() => void activate(release.version)}>切换使用</Button>
             ]
             if (release.installed && !active && !bundledRelease) {
               actions.push(
