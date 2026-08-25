@@ -235,9 +235,7 @@ export function registerIpc({ profiles, settings, launcher, kernels, extensions,
   ipcMain.handle('profiles:remove', async (_event, id: string) => {
     if (launcher.isRunning(id)) throw new Error('请先关闭运行中的环境')
     if (cookies.isBusy(id)) throw new Error('该环境正在执行 Cookie 操作')
-    if (scheduler.profileTasks(id).length) throw new Error('该环境仍被计划任务引用，请先删除对应计划任务')
     await profiles.remove(id)
-    await mcp.removeProfile(id)
   })
   ipcMain.handle('profiles:launch', (_event, id: string, options?: { allowGeoConflict?: unknown }) => {
     if (cookies.isBusy(id)) throw new Error('该环境正在执行 Cookie 操作')
