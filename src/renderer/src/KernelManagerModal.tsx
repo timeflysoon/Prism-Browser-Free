@@ -1,15 +1,13 @@
-import { CheckCircleFilled, CrownOutlined, DeleteOutlined, FolderOpenOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { CheckCircleFilled, DeleteOutlined, FolderOpenOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { Alert, Button, List, Modal, Popconfirm, Space, Spin, Tag, Typography, message } from 'antd'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { EngineStatus, KernelHealth, KernelRelease } from '../../shared/types'
-import { kernelRequiresPro } from '../../shared/kernel-policy'
 
 interface KernelManagerModalProps {
   open: boolean
   engine: EngineStatus | null
   onClose: () => void
   onEngineChanged: (engine: EngineStatus) => void
-  proActive: boolean
 }
 
 function sizeLabel(size: number): string {
