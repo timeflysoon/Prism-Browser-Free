@@ -122,32 +122,7 @@ app.whenReady().then(async () => {
   await Promise.all([updater.initialize(), licensing.initialize()])
   launcher.setProKernelAccessCheck(() => licensing.status().plan === 'pro')
   kernels.setProKernelAccessCheck(() => licensing.status().plan === 'pro')
-  mcp = new McpControlManager(
-    new McpPermissionStore(vaultPath), profiles, launcher, licensing, mcpAudit,
-    (status) => mainWindow?.webContents.send('mcp:changed', status)
-  )
-  await mcp.initialize()
-  automation = new ProAgentManager(
-    profiles,
-    launcher,
-    licensing,
-    automationAudit,
-    process.resourcesPath,
-    (status) => mainWindow?.webContents.send('automation:changed', status),
-    logger
-  )
-  automation.attachMcpBroker(mcp)
-  scheduler = new SchedulerManager(
-    new SchedulerStore(vaultPath),
-    profiles,
-    launcher,
-    licensing,
-    schedulerAudit,
-    (tasks) => mainWindow?.webContents.send('scheduler:changed', tasks),
-    logger
-  )
-  await scheduler.initialize()
-  registerIpc({ profiles, settings, launcher, kernels, extensions, cookies, logger, backups, workspaceMigration, appSession, updater, licensing, automation, scheduler, mcp, announcements })
+  registerIpc({ profiles, settings, launcher, kernels, extensions, cookies, logger, backups, workspaceMigration, appSession, updater, licensing, announcements })
   mainWindow = createWindow()
   if (app.isPackaged && process.env.PRISM_E2E !== '1') {
     setTimeout(() => void updater.check().catch(() => undefined), 10_000)
