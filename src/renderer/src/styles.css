@@ -186,10 +186,6 @@ button, input, textarea { font: inherit; }
 .mcp-profile small { margin-top: 3px; color: #7c8597; font-size: 10px; }
 .mcp-configuration .ant-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
 .mcp-configuration > .ant-alert { margin-top: 10px; }
-.license-active-panel { display: flex; align-items: center; gap: 11px; min-height: 64px; padding: 12px 14px; border: 1px solid #cdebdc; border-radius: 11px; color: #18835d; background: #f0fbf6; }
-.license-active-panel > .anticon { font-size: 19px; }
-.license-active-panel strong, .license-active-panel span { display: block; }
-.license-active-panel span { margin-top: 3px; color: #5c756b; font-size: 10px; }
 
 @media (max-width: 1150px) {
   .content { padding-inline: 24px; }
