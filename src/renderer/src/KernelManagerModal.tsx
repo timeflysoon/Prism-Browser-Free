@@ -19,7 +19,7 @@ function errorText(error: unknown): string {
     .replace(/^Error invoking remote method '[^']+': Error: /, '')
 }
 
-export function KernelManagerModal({ open, engine, onClose, onEngineChanged, proActive }: KernelManagerModalProps) {
+export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: KernelManagerModalProps) {
   const [releases, setReleases] = useState<KernelRelease[]>([])
   const [loading, setLoading] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
