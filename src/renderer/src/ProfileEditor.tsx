@@ -31,7 +31,6 @@ import {
 } from '../../shared/hardware-profiles'
 import { effectiveNetworkIdentity } from '../../shared/network-identity'
 import type { BrowserExtension, BrowserProfileView, EngineStatus, HardwareProfileId, KernelRelease, ProfileDraft, ProxyTestResult } from '../../shared/types'
-import { kernelRequiresPro } from '../../shared/kernel-policy'
 
 interface EditorValues extends Omit<ProfileDraft, 'startUrls' | 'color'> {
   startUrlsText: string
