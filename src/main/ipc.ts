@@ -356,10 +356,6 @@ export function registerIpc({ profiles, settings, launcher, kernels, extensions,
   if (process.env.PRISM_E2E === '1') {
     ipcMain.handle('diagnostics:e2e-quit', () => app.quit())
   }
-  ipcMain.handle('licensing:status', () => licensing.status())
-  ipcMain.handle('licensing:sync', () => licensing.synchronize())
-  ipcMain.handle('licensing:activate', (_event, activationCode: string) => licensing.activate(activationCode))
-  ipcMain.handle('licensing:deactivate', () => licensing.deactivate())
   ipcMain.handle('extensions:list', () => extensions.list())
   ipcMain.handle('extensions:import-directory', async () => {
     const owner = BrowserWindow.getFocusedWindow()
