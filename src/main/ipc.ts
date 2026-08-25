@@ -25,8 +25,6 @@ import type { LicenseManager } from './license-manager'
 import type { WorkspaceMigrationManager } from './workspace-migration'
 import type { AnnouncementManager } from './announcement-manager'
 
-export const PRO_PURCHASE_URL = 'https://pay.ldxp.cn/item/q23itv'
-
 interface IpcDependencies {
   profiles: ProfileStore
   settings: SettingsStore
