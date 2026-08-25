@@ -198,10 +198,9 @@ export default function App() {
       window.browserApi.engine.installed(),
       window.browserApi.engine.bundled(),
       window.browserApi.diagnostics.sessionHealth(),
-      window.browserApi.updates.status(),
-      window.browserApi.licensing.status()
+      window.browserApi.updates.status()
     ])
-      .then(([items, engineStatus, extensionItems, storageHealth, installedKernels, bundled, recoveryStatus, applicationUpdate, licenseStatus]) => {
+      .then(([items, engineStatus, extensionItems, storageHealth, installedKernels, bundled, recoveryStatus, applicationUpdate]) => {
         setProfiles(items)
         setEngine(engineStatus)
         setExtensions(extensionItems)
@@ -210,26 +209,20 @@ export default function App() {
         setBundledEngine(bundled)
         setAppRecoveryStatus(recoveryStatus)
         setUpdateStatus(applicationUpdate)
-        void applyLicenseStatus(licenseStatus, engineStatus).catch((error) => messageApi.error(humanError(error)))
       })
       .catch((error) => messageApi.error(humanError(error)))
       .finally(() => setLoading(false))
 
     void refreshStorageOverview()
     // 应用更新公告不再在启动时自动检查，只有用户打开"应用更新"面板并手动点击"重新检查"时才会请求
-    void window.browserApi.licensing.sync().then((status) => applyLicenseStatus(status)).catch(() => undefined)
 
     const removeProfileListener = window.browserApi.profiles.onChanged((changed) => {
       setProfiles((current) => current.map((profile) => profile.id === changed.id ? changed : profile))
     })
     const removeUpdateListener = window.browserApi.updates.onChanged(setUpdateStatus)
-    const removeLicenseListener = window.browserApi.licensing.onChanged((status) => {
-      void applyLicenseStatus(status).catch((error) => messageApi.error(humanError(error)))
-    })
     return () => {
       removeProfileListener()
       removeUpdateListener()
-      removeLicenseListener()
     }
   }, [messageApi])
 
