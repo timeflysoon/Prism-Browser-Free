@@ -40,9 +40,6 @@ interface IpcDependencies {
   appSession: AppSessionTracker
   updater: UpdateManager
   licensing: LicenseManager
-  automation: ProAgentManager
-  scheduler: SchedulerManager
-  mcp: McpControlManager
   announcements: AnnouncementManager
 }
 
