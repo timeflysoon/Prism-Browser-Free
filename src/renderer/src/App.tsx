@@ -58,7 +58,6 @@ import { BatchResultModal, type BatchOperationResult } from './BatchResultModal'
 import { UpdateModal } from './UpdateModal'
 import { WorkspaceMigrationModal } from './WorkspaceMigrationModal'
 import { effectiveNetworkIdentity, geoConflictConfirmationMessage } from '../../shared/network-identity'
-import { kernelRequiresPro } from '../../shared/kernel-policy'
 import { orderBatchLaunchProfiles, waitForBatchLaunchGap } from './batch-launch-order'
 import { profileTableSorters } from './profile-table-sort'
 
