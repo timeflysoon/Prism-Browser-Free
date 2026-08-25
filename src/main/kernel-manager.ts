@@ -233,7 +233,6 @@ export class KernelManager {
     if (this.installingVersion) throw new Error(`内核 ${this.installingVersion} 正在安装，请稍候`)
     const executable = await normalizeBrowserSelection(selection)
     const { version, sourceRoot, executableRelative } = await this.inspectLocalBuild(executable)
-    this.assertKernelEntitlement(version)
     const destination = this.kernelPath(version)
     const existing = await this.readManifest(version)
     if (existing) {
