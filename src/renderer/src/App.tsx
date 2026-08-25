@@ -821,9 +821,7 @@ export default function App() {
           <span>{profile.fingerprint.platform === 'windows' ? 'Windows' : 'macOS'}</span>
           <span>{profile.fingerprint.screenWidth}×{profile.fingerprint.screenHeight}</span>
           <span>{effectiveNetworkIdentity(profile.fingerprint, profile.proxyCheck).timezone}</span>
-          <span>{profile.kernelVersion
-            ? <>内核 {profile.kernelVersion}{kernelRequiresPro(profile.kernelVersion) && <Tag color="gold">Pro</Tag>}</>
-            : '内核自动'}</span>
+          <span>{profile.kernelVersion ? <>内核 {profile.kernelVersion}</> : '内核自动'}</span>
           <span className={`webrtc-badge ${profile.fingerprint.webrtcPolicy}`}>
             {profile.fingerprint.webrtcPolicy === 'proxy_only' ? 'WebRTC 防泄漏' : profile.fingerprint.webrtcPolicy === 'public_only' ? 'WebRTC 公网' : 'WebRTC 默认'}
           </span>
