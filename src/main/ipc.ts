@@ -261,12 +261,10 @@ export function registerIpc({ profiles, settings, launcher, kernels, extensions,
   })
   ipcMain.handle('profiles:remove-many', async (_event, ids: string[]) => {
     for (const id of ids) {
-      if (launcher.isRunning(id)) throw new Error(`环境“${profiles.get(id).name}”正在运行，不能删除`)
-      if (cookies.isBusy(id)) throw new Error(`环境“${profiles.get(id).name}”正在执行 Cookie 操作`)
-      if (scheduler.profileTasks(id).length) throw new Error(`环境“${profiles.get(id).name}”仍被计划任务引用，请先删除对应计划任务`)
+      if (launcher.isRunning(id)) throw new Error(`环境"${profiles.get(id).name}"正在运行，不能删除`)
+      if (cookies.isBusy(id)) throw new Error(`环境"${profiles.get(id).name}"正在执行 Cookie 操作`)
     }
     await profiles.removeMany(ids)
-    await Promise.all(ids.map((id) => mcp.removeProfile(id)))
   })
 
   ipcMain.handle('engine:status', () => locateBrowser(settings))
