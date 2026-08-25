@@ -74,7 +74,6 @@ export class BrowserLauncher {
   private activeLaunches = 0
   private readonly launchWaiters: Array<() => void> = []
   private closeAllOperation?: Promise<void>
-  private canUseProKernel: () => boolean = () => true
 
   constructor(
     private readonly profiles: ProfileStore,
