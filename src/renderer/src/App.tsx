@@ -164,6 +164,48 @@ export default function App() {
   const [mcpStatus, setMcpStatus] = useState<McpStatus | null>(null)
   const [mcpPermissions, setMcpPermissions] = useState<McpProfilePermission[]>([])
   const [messageApi, contextHolder] = message.useMessage()
+  const [noteEditingId, setNoteEditingId] = useState<string | undefined>()
+  const [noteDraft, setNoteDraft] = useState('')
+  const [noteSaving, setNoteSaving] = useState(false)
+
+  function openNoteEditor(profile: BrowserProfileView): void {
+    setNoteEditingId(profile.id)
+    setNoteDraft(profile.note)
+  }
+
+  function cancelNoteEdit(): void {
+    setNoteEditingId(undefined)
+    setNoteDraft('')
+  }
+
+  async function confirmNoteEdit(profile: BrowserProfileView): Promise<void> {
+    if (profile.status !== 'closed' && profile.status !== 'error') {
+      messageApi.warning('运行中的环境请先关闭再修改备注')
+      return
+    }
+    setNoteSaving(true)
+    try {
+      const saved = await window.browserApi.profiles.update(profile.id, {
+        name: profile.name,
+        note: noteDraft,
+        group: profile.group,
+        tags: profile.tags,
+        extensionIds: profile.extensionIds,
+        color: profile.color,
+        startUrls: profile.startUrls,
+        kernelVersion: profile.kernelVersion,
+        window: profile.window,
+        proxy: profile.proxy,
+        fingerprint: profile.fingerprint
+      })
+      upsert(saved)
+      cancelNoteEdit()
+    } catch (error) {
+      messageApi.error(humanError(error))
+    } finally {
+      setNoteSaving(false)
+    }
+  }
 
   async function applyLicenseStatus(status: LicenseStatus, knownEngine?: EngineStatus): Promise<void> {
     setLicense(status)
