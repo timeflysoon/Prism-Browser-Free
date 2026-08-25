@@ -3,8 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { AnnouncementStatus, ProductAnnouncement } from '../shared/types'
 import type { Logger } from './app-logger'
-import { canonicalJson } from './license-crypto'
-import { activationUrl, validateConfig } from './license-manager'
+import { activationUrl, canonicalJson, validateSignedConfig } from './signed-config'
 
 interface AnnouncementPayload extends ProductAnnouncement {
   schemaVersion: 1
