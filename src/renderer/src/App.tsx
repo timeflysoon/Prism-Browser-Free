@@ -823,19 +823,38 @@ export default function App() {
         </div>
       )
     },
-    // ---- 修改点 1：在“分组 / 标签”列前插入独立的“备注”列，保留换行符，最多显示 10 行，超出省略并可悬停查看完整内容 ----
+    // ---- 修改点 5：备注列改为点击弹出浮层，浮层内多行编辑，取消/确定两个按钮，仿 VirtualBrowser 交互 ----
     {
       title: '备注',
       dataIndex: 'note',
       key: 'note',
       width: 200,
       render: (_value, profile) => (
-        profile.note
-          ? (
-            <Tooltip
-              title={<div style={{ whiteSpace: 'pre-wrap' }}>{profile.note}</div>}
-              overlayStyle={{ maxWidth: 320 }}
-            >
+        <Popover
+          trigger="click"
+          open={noteEditingId === profile.id}
+          onOpenChange={(open) => { if (!open) cancelNoteEdit() }}
+          content={
+            <div style={{ width: 260 }}>
+              <Input.TextArea
+                autoFocus
+                autoSize={{ minRows: 3, maxRows: 10 }}
+                value={noteDraft}
+                maxLength={500}
+                onChange={(event) => setNoteDraft(event.target.value)}
+              />
+              <Space style={{ marginTop: 8, justifyContent: 'flex-end', width: '100%' }}>
+                <Button size="small" onClick={cancelNoteEdit}>取消</Button>
+                <Button size="small" type="primary" loading={noteSaving} onClick={() => void confirmNoteEdit(profile)}>确定</Button>
+              </Space>
+            </div>
+          }
+        >
+          <div
+            onClick={() => openNoteEditor(profile)}
+            style={{ cursor: 'pointer', minHeight: 22 }}
+          >
+            {profile.note ? (
               <div
                 style={{
                   whiteSpace: 'pre-wrap',
@@ -848,9 +867,11 @@ export default function App() {
               >
                 {profile.note}
               </div>
-            </Tooltip>
-          )
-          : <Typography.Text type="secondary">—</Typography.Text>
+            ) : (
+              <Typography.Text type="secondary">点击添加备注</Typography.Text>
+            )}
+          </div>
+        </Popover>
       )
     },
     {
