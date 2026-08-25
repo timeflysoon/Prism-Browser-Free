@@ -81,17 +81,6 @@ const api: BrowserApi = {
     sessionHealth: () => ipcRenderer.invoke('diagnostics:session-health'),
     e2eQuit: () => ipcRenderer.invoke('diagnostics:e2e-quit')
   },
-  licensing: {
-    status: () => ipcRenderer.invoke('licensing:status'),
-    sync: () => ipcRenderer.invoke('licensing:sync'),
-    activate: (activationCode: string) => ipcRenderer.invoke('licensing:activate', activationCode),
-    deactivate: () => ipcRenderer.invoke('licensing:deactivate'),
-    onChanged: (listener) => {
-      const handler = (_event: Electron.IpcRendererEvent, status: Parameters<typeof listener>[0]) => listener(status)
-      ipcRenderer.on('licensing:changed', handler)
-      return () => ipcRenderer.removeListener('licensing:changed', handler)
-    }
-  },
   extensions: {
     list: () => ipcRenderer.invoke('extensions:list'),
     importDirectory: () => ipcRenderer.invoke('extensions:import-directory'),
