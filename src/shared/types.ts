@@ -21,23 +21,6 @@ export interface ProfileLaunchOptions {
   allowGeoConflict?: boolean
 }
 export type EnginePreference = 'auto' | 'bundled' | 'system'
-export type ProEntitlement =
-  | 'automation-api'
-  | 'scheduler'
-  | 'mcp'
-
-export interface LicenseStatus {
-  plan: 'community' | 'pro'
-  state: 'community' | 'active' | 'maintenance-expired' | 'invalid' | 'unavailable'
-  activationAvailable: boolean
-  message: string
-  deviceId?: string
-  licenseId?: string
-  issuedAt?: string
-  leaseExpiresAt?: string
-  maintenanceUntil?: string
-  entitlements: ProEntitlement[]
-}
 
 export interface ProductAnnouncement {
   id: string
