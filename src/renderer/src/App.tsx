@@ -775,7 +775,7 @@ export default function App() {
           />
           <div>
             <Typography.Text strong>#{profile.serialNumber} · {profile.name}</Typography.Text>
-            {profile.note && <Typography.Text type="secondary" className="profile-subtitle">{profile.note}</Typography.Text>}
+            {/* ---- 修改点 2：备注已单独成列（见修改点 1），此处不再重复显示副标题 ---- */}
           </div>
         </div>
       )
