@@ -222,7 +222,7 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
                 actions={actions}
               >
                 <List.Item.Meta
-                  title={<Space><span>Chromium {release.version}</span>{release.installed && <Tag>已安装</Tag>}{bundledRelease && <Tag color="blue">随应用内置</Tag>}{release.origin === 'local-build' && <Tag color="purple">本地构建</Tag>}{proKernel && <Tag color="gold" icon={<CrownOutlined />}>Pro</Tag>}{health[release.version]?.status === 'healthy' && <Tag color="success">文件正常</Tag>}{health[release.version]?.status === 'unverified' && <Tag color="warning">建议重新导入</Tag>}{health[release.version]?.status === 'corrupt' && <Tag color="error">文件异常，请安装新版 Prism Browser 或重新导入本地构建</Tag>}</Space>}
+                  title={<Space><span>Chromium {release.version}</span>{release.installed && <Tag>已安装</Tag>}{bundledRelease && <Tag color="blue">随应用内置</Tag>}{release.origin === 'local-build' && <Tag color="purple">本地构建</Tag>}{health[release.version]?.status === 'healthy' && <Tag color="success">文件正常</Tag>}{health[release.version]?.status === 'unverified' && <Tag color="warning">建议重新导入</Tag>}{health[release.version]?.status === 'corrupt' && <Tag color="error">文件异常，请安装新版 Prism Browser 或重新导入本地构建</Tag>}</Space>}
                   description={
                     <div className="kernel-meta">
                       <span>{release.size ? sizeLabel(release.size) : '本地安装'}</span>
