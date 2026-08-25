@@ -14,9 +14,7 @@ import { ProfileBackupManager } from './profile-backup'
 import { AppSessionTracker } from './app-session'
 import { UpdateManager } from './update-manager'
 import { migrateMacLegacyKernelSelection } from './browser-locator'
-import { LicenseManager } from './license-manager'
 import { WorkspaceMigrationManager } from './workspace-migration'
-import { ElectronDeviceKeyProtector } from './electron-device-key-protector'
 import { AnnouncementManager } from './announcement-manager'
 
 let mainWindow: BrowserWindow | null = null
