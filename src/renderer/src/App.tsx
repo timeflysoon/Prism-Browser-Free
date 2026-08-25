@@ -3,9 +3,7 @@ import {
   AppstoreOutlined,
   AppstoreAddOutlined,
   CheckCircleFilled,
-  ClockCircleOutlined,
   CopyOutlined,
-  CrownOutlined,
   DatabaseOutlined,
   DeleteOutlined,
   DownloadOutlined,
@@ -17,7 +15,6 @@ import {
   PoweroffOutlined,
   RestOutlined,
   ReloadOutlined,
-  RobotOutlined,
   SafetyCertificateOutlined,
   SearchOutlined,
   SettingOutlined,
@@ -49,7 +46,7 @@ import {
   type TableColumnsType
 } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
-import type { AnnouncementStatus, AppRecoveryStatus, AppUpdateStatus, AutomationStatus, BrowserCrashRecord, BrowserExtension, BrowserProfileView, EngineStatus, KernelRelease, LaunchDiagnosticReport, LicenseStatus, McpProfilePermission, McpStatus, ProfileDraft, ProfileStoreHealth, ScheduledTask, StorageOverview } from '../../shared/types'
+import type { AnnouncementStatus, AppRecoveryStatus, AppUpdateStatus, BrowserCrashRecord, BrowserExtension, BrowserProfileView, EngineStatus, KernelRelease, LaunchDiagnosticReport, LicenseStatus, ProfileDraft, ProfileStoreHealth, StorageOverview } from '../../shared/types'
 import { ProfileEditor } from './ProfileEditor'
 import { KernelManagerModal } from './KernelManagerModal'
 import { ProfileDataModal } from './ProfileDataModal'
@@ -59,11 +56,7 @@ import { LaunchDiagnosticsModal } from './LaunchDiagnosticsModal'
 import { CrashHistoryModal } from './CrashHistoryModal'
 import { BatchResultModal, type BatchOperationResult } from './BatchResultModal'
 import { UpdateModal } from './UpdateModal'
-import { PlanModal } from './PlanModal'
 import { WorkspaceMigrationModal } from './WorkspaceMigrationModal'
-import { AutomationModal } from './AutomationModal'
-import { SchedulerModal } from './SchedulerModal'
-import { McpModal } from './McpModal'
 import { effectiveNetworkIdentity, geoConflictConfirmationMessage } from '../../shared/network-identity'
 import { kernelRequiresPro } from '../../shared/kernel-policy'
 import { orderBatchLaunchProfiles, waitForBatchLaunchGap } from './batch-launch-order'
@@ -137,9 +130,7 @@ export default function App() {
   const [extensionManagerOpen, setExtensionManagerOpen] = useState(false)
   const [profileStorageHealth, setProfileStorageHealth] = useState<ProfileStoreHealth | null>(null)
   const [appRecoveryStatus, setAppRecoveryStatus] = useState<AppRecoveryStatus | null>(null)
-  const [planModalOpen, setPlanModalOpen] = useState(false)
   const [license, setLicense] = useState<LicenseStatus | null>(null)
-  const [activatingLicense, setActivatingLicense] = useState(false)
   const [diagnosticProfile, setDiagnosticProfile] = useState<BrowserProfileView>()
   const [diagnosticReport, setDiagnosticReport] = useState<LaunchDiagnosticReport>()
   const [crashProfile, setCrashProfile] = useState<BrowserProfileView>()
@@ -156,13 +147,6 @@ export default function App() {
   const [announcementStatus, setAnnouncementStatus] = useState<AnnouncementStatus | null>(null)
   const [migrationMode, setMigrationMode] = useState<'export' | 'import' | null>(null)
   const [migrationBusy, setMigrationBusy] = useState(false)
-  const [automationOpen, setAutomationOpen] = useState(false)
-  const [automationStatus, setAutomationStatus] = useState<AutomationStatus | null>(null)
-  const [schedulerOpen, setSchedulerOpen] = useState(false)
-  const [scheduledTasks, setScheduledTasks] = useState<ScheduledTask[]>([])
-  const [mcpOpen, setMcpOpen] = useState(false)
-  const [mcpStatus, setMcpStatus] = useState<McpStatus | null>(null)
-  const [mcpPermissions, setMcpPermissions] = useState<McpProfilePermission[]>([])
   const [messageApi, contextHolder] = message.useMessage()
   const [noteEditingId, setNoteEditingId] = useState<string | undefined>()
   const [noteDraft, setNoteDraft] = useState('')
@@ -233,13 +217,9 @@ export default function App() {
       window.browserApi.engine.bundled(),
       window.browserApi.diagnostics.sessionHealth(),
       window.browserApi.updates.status(),
-      window.browserApi.licensing.status(),
-      window.browserApi.automation.status(),
-      window.browserApi.scheduler.list(),
-      window.browserApi.mcp.status(),
-      window.browserApi.mcp.permissions()
+      window.browserApi.licensing.status()
     ])
-      .then(([items, engineStatus, extensionItems, storageHealth, installedKernels, bundled, recoveryStatus, applicationUpdate, licenseStatus, localAutomation, tasks, localMcp, permissions]) => {
+      .then(([items, engineStatus, extensionItems, storageHealth, installedKernels, bundled, recoveryStatus, applicationUpdate, licenseStatus]) => {
         setProfiles(items)
         setEngine(engineStatus)
         setExtensions(extensionItems)
@@ -249,16 +229,12 @@ export default function App() {
         setAppRecoveryStatus(recoveryStatus)
         setUpdateStatus(applicationUpdate)
         void applyLicenseStatus(licenseStatus, engineStatus).catch((error) => messageApi.error(humanError(error)))
-        setAutomationStatus(localAutomation)
-        setScheduledTasks(tasks)
-        setMcpStatus(localMcp)
-        setMcpPermissions(permissions)
       })
       .catch((error) => messageApi.error(humanError(error)))
       .finally(() => setLoading(false))
 
     void refreshStorageOverview()
-    void window.browserApi.announcements.check().then(setAnnouncementStatus).catch(() => undefined)
+    // 应用更新公告不再在启动时自动检查，只有用户打开"应用更新"面板并手动点击"重新检查"时才会请求
     void window.browserApi.licensing.sync().then((status) => applyLicenseStatus(status)).catch(() => undefined)
 
     const removeProfileListener = window.browserApi.profiles.onChanged((changed) => {
@@ -268,57 +244,12 @@ export default function App() {
     const removeLicenseListener = window.browserApi.licensing.onChanged((status) => {
       void applyLicenseStatus(status).catch((error) => messageApi.error(humanError(error)))
     })
-    const removeAutomationListener = window.browserApi.automation.onChanged(setAutomationStatus)
-    const removeSchedulerListener = window.browserApi.scheduler.onChanged(setScheduledTasks)
-    const removeMcpListener = window.browserApi.mcp.onChanged(setMcpStatus)
     return () => {
       removeProfileListener()
       removeUpdateListener()
       removeLicenseListener()
-      removeAutomationListener()
-      removeSchedulerListener()
-      removeMcpListener()
     }
   }, [messageApi])
-
-  async function activateLicense(activationCode: string): Promise<void> {
-    setActivatingLicense(true)
-    try {
-      const status = await window.browserApi.licensing.activate(activationCode)
-      setLicense(status)
-      messageApi.success('Prism Pro 已在当前设备激活')
-    } catch (error) {
-      messageApi.error(humanError(error))
-    } finally {
-      setActivatingLicense(false)
-    }
-  }
-
-  async function deactivateLicense(): Promise<void> {
-    setActivatingLicense(true)
-    try {
-      const status = await window.browserApi.licensing.deactivate()
-      await applyLicenseStatus(status)
-      messageApi.success('当前设备已解除 Prism Pro 绑定')
-    } catch (error) {
-      messageApi.error(humanError(error))
-    } finally {
-      setActivatingLicense(false)
-    }
-  }
-
-  async function openProPurchase(): Promise<void> {
-    try {
-      await window.browserApi.licensing.openPurchase()
-    } catch (error) {
-      messageApi.error(humanError(error))
-    }
-  }
-
-  function openPlanModal(): void {
-    setPlanModalOpen(true)
-    void window.browserApi.licensing.sync().then(setLicense).catch(() => undefined)
-  }
 
   const visibleProfiles = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -818,12 +749,10 @@ export default function App() {
           />
           <div>
             <Typography.Text strong>#{profile.serialNumber} · {profile.name}</Typography.Text>
-            {/* ---- 修改点 2：备注已单独成列（见修改点 1），此处不再重复显示副标题 ---- */}
           </div>
         </div>
       )
     },
-    // ---- 修改点 5：备注列改为点击弹出浮层，浮层内多行编辑，取消/确定两个按钮，仿 VirtualBrowser 交互 ----
     {
       title: '备注',
       dataIndex: 'note',
@@ -989,24 +918,7 @@ export default function App() {
         <button className="nav-item sidebar-action" onClick={() => setUpdateModalOpen(true)}>
           <DownloadOutlined /><span>应用更新</span><b>{announcementStatus?.state === 'available' ? '1' : ''}</b>
         </button>
-        <button className="nav-item sidebar-action" onClick={() => setAutomationOpen(true)}>
-          <ApiOutlined /><span>自动化 API</span><b>{automationStatus?.state === 'running' ? 'ON' : ''}</b>
-        </button>
-        <button className="nav-item sidebar-action" onClick={() => setSchedulerOpen(true)}>
-          <ClockCircleOutlined /><span>计划任务</span><b>{scheduledTasks.filter((task) => task.enabled).length || ''}</b>
-        </button>
-        <button className="nav-item sidebar-action" onClick={() => setMcpOpen(true)}>
-          <RobotOutlined /><span>本地 AI · MCP</span><b>{mcpStatus?.state === 'running' ? 'ON' : ''}</b>
-        </button>
         <div className="sidebar-spacer" />
-        <button className="community-card" onClick={openPlanModal}>
-          <span className="community-icon"><CrownOutlined /></span>
-          <span>
-            <strong>{license?.plan === 'pro' ? 'Prism Pro' : 'Community'}</strong>
-            <small>{license?.plan === 'pro' ? '已绑定当前设备' : '免费 · 开源 · 本地优先'}</small>
-          </span>
-          <span className="community-action">{license?.plan === 'pro' ? '查看授权' : '了解 Pro'}</span>
-        </button>
         <button className="engine-card" onClick={() => setKernelManagerOpen(true)}>
           <span className={`engine-indicator ${engine?.fingerprintKernel ? 'ready' : ''}`} />
           <span><strong>{engine?.fingerprintKernel ? '指纹内核已连接' : '配置浏览器内核'}</strong><small>{engine?.label ?? '正在检查…'}</small></span>
@@ -1024,9 +936,6 @@ export default function App() {
               <Typography.Text type="secondary">创建、运行并管理彼此隔离的浏览器身份</Typography.Text>
             </div>
             <Space>
-              <Button className={`plan-pill ${license?.plan === 'pro' ? 'active' : ''}`} icon={<CrownOutlined />} onClick={openPlanModal}>
-                {license?.plan === 'pro' ? 'Prism Pro · 已激活' : 'Community · 免费'}
-              </Button>
               {runningCount > 0 && (
                 <Button icon={<PoweroffOutlined />} onClick={() => void window.browserApi.profiles.closeAll()}>
                   全部关闭
@@ -1233,46 +1142,12 @@ export default function App() {
         onClose={() => setUpdateModalOpen(false)}
         onAnnouncementChanged={setAnnouncementStatus}
       />
-      <PlanModal
-        open={planModalOpen}
-        license={license}
-        activating={activatingLicense}
-        onActivate={activateLicense}
-        onDeactivate={deactivateLicense}
-        onPurchase={openProPurchase}
-        onClose={() => setPlanModalOpen(false)}
-      />
       <WorkspaceMigrationModal
         mode={migrationMode}
         busy={migrationBusy}
         profileCount={profiles.length}
         onSubmit={runWorkspaceMigration}
         onClose={() => { if (!migrationBusy) setMigrationMode(null) }}
-      />
-      <AutomationModal
-        open={automationOpen}
-        status={automationStatus}
-        proEnabled={Boolean(license?.entitlements.includes('automation-api'))}
-        onChanged={setAutomationStatus}
-        onClose={() => setAutomationOpen(false)}
-      />
-      <SchedulerModal
-        open={schedulerOpen}
-        tasks={scheduledTasks}
-        profiles={profiles}
-        proEnabled={Boolean(license?.entitlements.includes('scheduler'))}
-        onChanged={setScheduledTasks}
-        onClose={() => setSchedulerOpen(false)}
-      />
-      <McpModal
-        open={mcpOpen}
-        status={mcpStatus}
-        permissions={mcpPermissions}
-        profiles={profiles}
-        proEnabled={Boolean(license?.entitlements.includes('mcp'))}
-        onStatusChanged={setMcpStatus}
-        onPermissionsChanged={setMcpPermissions}
-        onClose={() => setMcpOpen(false)}
       />
 
       <ProfileEditor
