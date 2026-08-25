@@ -40,17 +40,6 @@ button, input, textarea { font: inherit; }
 .sidebar-action { width: 100%; margin-top: 5px; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .sidebar-action:hover { color: #fff; background: rgba(255,255,255,.06); }
 .sidebar-spacer { flex: 1; }
-.community-card {
-  width: 100%; display: grid; grid-template-columns: 32px 1fr; align-items: center; gap: 9px;
-  margin-bottom: 10px; padding: 11px; border: 1px solid rgba(111, 145, 255, .2); border-radius: 13px;
-  color: #ecf2ff; background: linear-gradient(135deg, rgba(79, 140, 255, .16), rgba(107, 92, 231, .08)); text-align: left; cursor: pointer;
-}
-.community-card:hover { border-color: rgba(129, 159, 255, .38); background: linear-gradient(135deg, rgba(79, 140, 255, .23), rgba(107, 92, 231, .12)); }
-.community-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; color: #cbd8ff; background: rgba(255,255,255,.08); }
-.community-card strong, .community-card small { display: block; }
-.community-card strong { font-size: 12px; }
-.community-card small { margin-top: 3px; color: #7f8aa1; font-size: 9px; }
-.community-action { grid-column: 2; color: #9eb5ff; font-size: 9px; }
 .engine-card {
   width: 100%; display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 10px;
   padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px;
