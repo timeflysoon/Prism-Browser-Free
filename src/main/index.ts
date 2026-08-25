@@ -23,9 +23,6 @@ let mainWindow: BrowserWindow | null = null
 let launcher: BrowserLauncher | null = null
 let logger: AppLogger | null = null
 let appSession: AppSessionTracker | null = null
-let automation: ProAgentManager | null = null
-let scheduler: SchedulerManager | null = null
-let mcp: McpControlManager | null = null
 
 if (process.platform === 'win32') app.setAppUserModelId('com.prismbrowser.desktop')
 
