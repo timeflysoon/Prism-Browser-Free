@@ -21,7 +21,6 @@ import { proxyForTest, publicProfile, sameProxyIdentity } from './profile-secret
 import type { ProfileBackupManager } from './profile-backup'
 import type { AppSessionTracker } from './app-session'
 import type { UpdateManager } from './update-manager'
-import type { LicenseManager } from './license-manager'
 import type { WorkspaceMigrationManager } from './workspace-migration'
 import type { AnnouncementManager } from './announcement-manager'
 
