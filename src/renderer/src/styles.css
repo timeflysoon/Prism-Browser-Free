@@ -190,7 +190,6 @@ button, input, textarea { font: inherit; }
 .license-active-panel > .anticon { font-size: 19px; }
 .license-active-panel strong, .license-active-panel span { display: block; }
 .license-active-panel span { margin-top: 3px; color: #5c756b; font-size: 10px; }
-.plan-modal .ant-alert { margin: 0 24px 22px; border: 0; border-radius: 12px; background: #f5f7fb; }
 
 @media (max-width: 1150px) {
   .content { padding-inline: 24px; }
