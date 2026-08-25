@@ -1137,7 +1137,6 @@ export default function App() {
       <KernelManagerModal
         open={kernelManagerOpen}
         engine={engine}
-        proActive={license?.plan === 'pro'}
         onClose={() => setKernelManagerOpen(false)}
         onEngineChanged={(nextEngine) => {
           setEngine(nextEngine)
