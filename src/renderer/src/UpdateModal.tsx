@@ -47,12 +47,6 @@ export function UpdateModal({
     }
   }
 
-  useEffect(() => {
-    if (open) void check()
-    // Every modal opening deliberately performs a fresh server check.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
   const announcement = announcementStatus?.announcement
   const isAvailable = announcementStatus?.state === 'available'
   const isCurrent = announcementStatus?.state === 'current'
