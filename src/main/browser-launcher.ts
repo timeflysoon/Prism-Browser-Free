@@ -95,10 +95,6 @@ export class BrowserLauncher {
     }
   }
 
-  setProKernelAccessCheck(check: () => boolean): void {
-    this.canUseProKernel = check
-  }
-
   async initialize(): Promise<void> {
     let systemProcesses
     try {
