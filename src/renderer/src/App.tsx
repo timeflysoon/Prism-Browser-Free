@@ -46,7 +46,7 @@ import {
   type TableColumnsType
 } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
-import type { AnnouncementStatus, AppRecoveryStatus, AppUpdateStatus, BrowserCrashRecord, BrowserExtension, BrowserProfileView, EngineStatus, KernelRelease, LaunchDiagnosticReport, LicenseStatus, ProfileDraft, ProfileStoreHealth, StorageOverview } from '../../shared/types'
+import type { AnnouncementStatus, AppRecoveryStatus, AppUpdateStatus, BrowserCrashRecord, BrowserExtension, BrowserProfileView, EngineStatus, KernelRelease, LaunchDiagnosticReport, ProfileDraft, ProfileStoreHealth, StorageOverview } from '../../shared/types'
 import { ProfileEditor } from './ProfileEditor'
 import { KernelManagerModal } from './KernelManagerModal'
 import { ProfileDataModal } from './ProfileDataModal'
