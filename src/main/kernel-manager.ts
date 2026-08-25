@@ -308,7 +308,6 @@ export class KernelManager {
 
   async activate(versionInput: string): Promise<EngineStatus> {
     const version = safeVersion(versionInput)
-    this.assertKernelEntitlement(version)
     const manifest = await this.readManifest(version)
     if (!manifest) throw new Error('该内核尚未安装')
     const executable = join(this.kernelPath(version), manifest.executableRelative)
