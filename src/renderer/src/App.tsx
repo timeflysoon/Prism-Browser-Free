@@ -189,22 +189,6 @@ export default function App() {
     }
   }
 
-  async function applyLicenseStatus(status: LicenseStatus, knownEngine?: EngineStatus): Promise<void> {
-    setLicense(status)
-    if (status.plan === 'pro') return
-    const selected = knownEngine ?? await window.browserApi.engine.status()
-    if (!kernelRequiresPro(selected.version)) return
-    const communityEngine = await window.browserApi.engine.activateBundled()
-    setEngine(communityEngine)
-    const [installedKernels, bundled] = await Promise.all([
-      window.browserApi.engine.installed(),
-      window.browserApi.engine.bundled()
-    ])
-    setKernels(installedKernels)
-    setBundledEngine(bundled)
-    messageApi.info('Pro 授权已失效，已自动切换到免费的 Chromium 144 内核')
-  }
-
   useEffect(() => {
     void Promise.all([
       window.browserApi.profiles.list(),
