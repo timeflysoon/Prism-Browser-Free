@@ -77,11 +77,7 @@ app.whenReady().then(async () => {
   const profiles = new ProfileStore(vaultPath, new ElectronSecretCodec())
   const settings = new SettingsStore(vaultPath)
   const extensions = new ExtensionStore(vaultPath, logger)
-  const automationAudit = new AutomationAuditLog(vaultPath)
-  const schedulerAudit = new SchedulerAuditLog(vaultPath)
-  const mcpAudit = new McpAuditLog(vaultPath)
   await logger.initialize()
-  await Promise.all([automationAudit.initialize(), schedulerAudit.initialize(), mcpAudit.initialize()])
   const appSessionSnapshot = await appSession.begin(app.getVersion())
   if (appSessionSnapshot.previousUnclean) {
     logger.error('检测到上次 Prism Browser 未正常退出', appSessionSnapshot.previousUnclean)
