@@ -780,6 +780,18 @@ export default function App() {
         </div>
       )
     },
+    // ---- 修改点 1：在“分组 / 标签”列前插入独立的“备注”列 ----
+    {
+      title: '备注',
+      dataIndex: 'note',
+      key: 'note',
+      width: 160,
+      render: (_value, profile) => (
+        profile.note
+          ? <Tooltip title={profile.note}><Typography.Text ellipsis className="note-cell">{profile.note}</Typography.Text></Tooltip>
+          : <Typography.Text type="secondary">—</Typography.Text>
+      )
+    },
     {
       title: '分组 / 标签',
       key: 'classification',
