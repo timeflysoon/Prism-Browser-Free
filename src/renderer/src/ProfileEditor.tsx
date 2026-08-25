@@ -78,7 +78,7 @@ const riskLabels: Record<NonNullable<ProxyTestResult['networkRisk']>, string> = 
   hosting: '机房网络'
 }
 
-export function ProfileEditor({ open, profile, suggestedIndex, saving, extensions, engine, kernels, groups, proEnabled, onCancel, onSave }: ProfileEditorProps) {
+export function ProfileEditor({ open, profile, suggestedIndex, saving, extensions, engine, kernels, groups, onCancel, onSave }: ProfileEditorProps) {
   const [form] = Form.useForm<EditorValues>()
   const proxyProtocol = Form.useWatch(['proxy', 'protocol'], form)
   const proxyPassword = Form.useWatch(['proxy', 'password'], form) ?? ''
