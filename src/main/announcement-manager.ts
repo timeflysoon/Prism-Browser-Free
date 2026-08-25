@@ -101,7 +101,7 @@ export class AnnouncementManager {
   async check(): Promise<AnnouncementStatus> {
     try {
       const path = this.configOverride ?? join(this.resourcesPath, 'license-config.json')
-      const config = validateConfig(JSON.parse(await readFile(path, 'utf8')))
+      const config = validateSignedConfig(JSON.parse(await readFile(path, 'utf8')))
       const response = await this.fetchImpl(activationUrl(config.activationBaseUrl, '/v1/announcements/current'), {
         method: 'GET',
         redirect: 'error',
