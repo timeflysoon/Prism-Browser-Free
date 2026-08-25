@@ -58,67 +58,6 @@ export interface AnnouncementStatus {
   announcement?: ProductAnnouncement
 }
 
-export interface AutomationStatus {
-  state: 'unavailable' | 'stopped' | 'starting' | 'running' | 'error'
-  message: string
-  endpoint?: string
-  agentVersion?: string
-  startedAt?: string
-  controlledProfileIds: string[]
-}
-
-export interface AutomationStartResult extends AutomationStatus {
-  accessToken: string
-}
-
-export type ScheduledTaskAction = 'launch' | 'close'
-export type ScheduledTaskSchedule =
-  | { kind: 'once'; runAt: string }
-  | { kind: 'daily'; time: string }
-  | { kind: 'weekly'; time: string; weekdays: number[] }
-
-export interface ScheduledTaskDraft {
-  name: string
-  profileId: string
-  action: ScheduledTaskAction
-  schedule: ScheduledTaskSchedule
-  enabled: boolean
-  missedPolicy: 'run_once' | 'skip'
-  maxRetries: number
-  retryDelayMinutes: number
-}
-
-export interface ScheduledTask extends ScheduledTaskDraft {
-  id: string
-  timezone: string
-  createdAt: string
-  updatedAt: string
-  nextRunAt?: string
-  lastRunAt?: string
-  lastOutcome?: 'success' | 'failure' | 'skipped'
-  lastMessage?: string
-  lastAttempts?: number
-}
-
-export interface McpProfilePermission {
-  profileId: string
-  enabled: boolean
-  updatedAt: string
-}
-
-export interface McpStatus {
-  state: 'stopped' | 'ready' | 'running' | 'error'
-  message: string
-  enabledProfileIds: string[]
-  controlledProfileIds: string[]
-}
-
-export interface McpConnection extends McpStatus {
-  command: string
-  args: string[]
-  env: Record<string, string>
-}
-
 export interface ProfileWindowConfig {
   mode: 'auto' | 'custom'
   x: number
