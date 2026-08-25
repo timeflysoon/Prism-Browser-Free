@@ -1131,7 +1131,6 @@ export default function App() {
         engine={engine}
         kernels={selectableKernels}
         groups={editableGroups}
-        proEnabled={license?.plan === 'pro'}
         onCancel={() => { setEditorOpen(false); setEditing(undefined) }}
         onSave={saveProfile}
       />
