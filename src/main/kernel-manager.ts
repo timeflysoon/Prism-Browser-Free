@@ -92,7 +92,6 @@ async function findEntry(root: string, predicate: (name: string) => boolean, dep
 export class KernelManager {
   private installingVersion: string | null = null
   private installAbort: AbortController | null = null
-  private canUseProKernel: () => boolean = () => true
 
   constructor(
     private readonly vaultPath: string,
@@ -101,16 +100,6 @@ export class KernelManager {
     private readonly logger?: Logger,
     private readonly kernelUsers: (version: string) => string[] | Promise<string[]> = () => []
   ) {}
-
-  setProKernelAccessCheck(check: () => boolean): void {
-    this.canUseProKernel = check
-  }
-
-  private assertKernelEntitlement(version: string): void {
-    if (kernelRequiresPro(version) && !this.canUseProKernel()) {
-      throw new Error(`Chromium ${version} 是 Prism Pro 内核，请先激活 Pro`)
-    }
-  }
 
   async installed(): Promise<KernelRelease[]> {
     const manifests = await this.installedManifests()
