@@ -269,7 +269,6 @@ export default function App() {
   }
 
   function canLaunchProfile(profile: BrowserProfileView): boolean {
-    if (kernelRequiresPro(profile.kernelVersion || engine?.version) && license?.plan !== 'pro') return false
     if (!profile.kernelVersion) return Boolean(engine?.executable)
     return selectableKernels.some((kernel) => kernel.version === profile.kernelVersion && kernel.executable)
   }
