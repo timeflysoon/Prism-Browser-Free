@@ -489,7 +489,6 @@ export interface BrowserApi {
     sync: () => Promise<LicenseStatus>
     activate: (activationCode: string) => Promise<LicenseStatus>
     deactivate: () => Promise<LicenseStatus>
-    openPurchase: () => Promise<void>
     onChanged: (listener: (status: LicenseStatus) => void) => () => void
   }
   automation: {
