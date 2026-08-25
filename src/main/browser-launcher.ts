@@ -20,7 +20,6 @@ import { GEOIP_CONFLICT_CONFIRMATION_PREFIX, hasCompleteProxyIdentity, proxyLaun
 import { sameProxyIdentity } from './profile-secrets'
 import { BrowserControlSession, PipeCdpTransport } from './browser-control-session'
 import type { Readable, Writable } from 'node:stream'
-import { kernelRequiresPro } from '../shared/kernel-policy'
 
 type ProxyTester = (config: ProxyConfig) => Promise<ProxyTestResult>
 
