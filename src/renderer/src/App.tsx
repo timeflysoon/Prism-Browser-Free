@@ -129,7 +129,6 @@ export default function App() {
   const [extensionManagerOpen, setExtensionManagerOpen] = useState(false)
   const [profileStorageHealth, setProfileStorageHealth] = useState<ProfileStoreHealth | null>(null)
   const [appRecoveryStatus, setAppRecoveryStatus] = useState<AppRecoveryStatus | null>(null)
-  const [license, setLicense] = useState<LicenseStatus | null>(null)
   const [diagnosticProfile, setDiagnosticProfile] = useState<BrowserProfileView>()
   const [diagnosticReport, setDiagnosticReport] = useState<LaunchDiagnosticReport>()
   const [crashProfile, setCrashProfile] = useState<BrowserProfileView>()
