@@ -1,5 +1,5 @@
 import { Alert, Button, Modal, Space, Tag, Typography, message } from 'antd'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { AnnouncementStatus, AppUpdateStatus } from '../../shared/types'
 
 interface UpdateModalProps {
