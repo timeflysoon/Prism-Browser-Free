@@ -124,9 +124,6 @@ app.whenReady().then(async () => {
   kernels.setProKernelAccessCheck(() => licensing.status().plan === 'pro')
   registerIpc({ profiles, settings, launcher, kernels, extensions, cookies, logger, backups, workspaceMigration, appSession, updater, licensing, announcements })
   mainWindow = createWindow()
-  if (app.isPackaged && process.env.PRISM_E2E !== '1') {
-    setTimeout(() => void updater.check().catch(() => undefined), 10_000)
-  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow()
