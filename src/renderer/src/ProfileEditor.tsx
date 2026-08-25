@@ -46,7 +46,6 @@ interface ProfileEditorProps {
   engine: EngineStatus | null
   kernels: KernelRelease[]
   groups: string[]
-  proEnabled: boolean
   onCancel: () => void
   onSave: (draft: ProfileDraft) => Promise<void>
 }
