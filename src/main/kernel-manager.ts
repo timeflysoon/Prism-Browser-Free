@@ -321,10 +321,6 @@ export class KernelManager {
   }
 
   async configure(patch: Pick<AppSettings, 'browserExecutable' | 'fingerprintKernel' | 'enginePreference'>, resolvedExecutable = patch.browserExecutable): Promise<EngineStatus> {
-    if (patch.fingerprintKernel && resolvedExecutable) {
-      const { version } = await this.inspectLocalBuild(resolvedExecutable)
-      this.assertKernelEntitlement(version)
-    }
     await this.rememberPreviousKernel(resolvedExecutable)
     await this.settings.update(patch)
     return locateBrowser(this.settings)
