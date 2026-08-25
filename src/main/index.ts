@@ -116,9 +116,6 @@ app.whenReady().then(async () => {
     new ElectronDeviceKeyProtector(),
     (status) => {
       mainWindow?.webContents.send('licensing:changed', status)
-      if (status.plan !== 'pro') void automation?.stop(true).catch(() => undefined)
-      if (status.plan !== 'pro') void mcp?.emergencyStop().catch(() => undefined)
-      scheduler?.refreshEntitlement()
     },
     logger
   )
