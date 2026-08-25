@@ -93,43 +93,6 @@ const api: BrowserApi = {
       return () => ipcRenderer.removeListener('licensing:changed', handler)
     }
   },
-  automation: {
-    status: () => ipcRenderer.invoke('automation:status'),
-    start: () => ipcRenderer.invoke('automation:start'),
-    stop: () => ipcRenderer.invoke('automation:stop'),
-    emergencyStop: () => ipcRenderer.invoke('automation:emergency-stop'),
-    onChanged: (listener) => {
-      const handler = (_event: Electron.IpcRendererEvent, status: Parameters<typeof listener>[0]) => listener(status)
-      ipcRenderer.on('automation:changed', handler)
-      return () => ipcRenderer.removeListener('automation:changed', handler)
-    }
-  },
-  scheduler: {
-    list: () => ipcRenderer.invoke('scheduler:list'),
-    create: (draft) => ipcRenderer.invoke('scheduler:create', draft),
-    update: (id, draft) => ipcRenderer.invoke('scheduler:update', id, draft),
-    remove: (id) => ipcRenderer.invoke('scheduler:remove', id),
-    setEnabled: (id, enabled) => ipcRenderer.invoke('scheduler:set-enabled', id, enabled),
-    runNow: (id) => ipcRenderer.invoke('scheduler:run-now', id),
-    onChanged: (listener) => {
-      const handler = (_event: Electron.IpcRendererEvent, tasks: Parameters<typeof listener>[0]) => listener(tasks)
-      ipcRenderer.on('scheduler:changed', handler)
-      return () => ipcRenderer.removeListener('scheduler:changed', handler)
-    }
-  },
-  mcp: {
-    status: () => ipcRenderer.invoke('mcp:status'),
-    permissions: () => ipcRenderer.invoke('mcp:permissions'),
-    setPermission: (profileId, enabled) => ipcRenderer.invoke('mcp:set-permission', profileId, enabled),
-    start: () => ipcRenderer.invoke('mcp:start'),
-    stop: () => ipcRenderer.invoke('mcp:stop'),
-    emergencyStop: () => ipcRenderer.invoke('mcp:emergency-stop'),
-    onChanged: (listener) => {
-      const handler = (_event: Electron.IpcRendererEvent, status: Parameters<typeof listener>[0]) => listener(status)
-      ipcRenderer.on('mcp:changed', handler)
-      return () => ipcRenderer.removeListener('mcp:changed', handler)
-    }
-  },
   extensions: {
     list: () => ipcRenderer.invoke('extensions:list'),
     importDirectory: () => ipcRenderer.invoke('extensions:import-directory'),
