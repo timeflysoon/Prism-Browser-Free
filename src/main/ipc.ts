@@ -362,9 +362,6 @@ export function registerIpc({ profiles, settings, launcher, kernels, extensions,
   ipcMain.handle('licensing:sync', () => licensing.synchronize())
   ipcMain.handle('licensing:activate', (_event, activationCode: string) => licensing.activate(activationCode))
   ipcMain.handle('licensing:deactivate', () => licensing.deactivate())
-  ipcMain.handle('licensing:open-purchase', async () => {
-    await shell.openExternal(PRO_PURCHASE_URL)
-  })
   ipcMain.handle('extensions:list', () => extensions.list())
   ipcMain.handle('extensions:import-directory', async () => {
     const owner = BrowserWindow.getFocusedWindow()
