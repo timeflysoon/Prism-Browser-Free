@@ -780,15 +780,33 @@ export default function App() {
         </div>
       )
     },
-    // ---- 修改点 1：在“分组 / 标签”列前插入独立的“备注”列 ----
+    // ---- 修改点 1：在“分组 / 标签”列前插入独立的“备注”列，保留换行符，最多显示 10 行，超出省略并可悬停查看完整内容 ----
     {
       title: '备注',
       dataIndex: 'note',
       key: 'note',
-      width: 160,
+      width: 200,
       render: (_value, profile) => (
         profile.note
-          ? <Tooltip title={profile.note}><Typography.Text ellipsis className="note-cell">{profile.note}</Typography.Text></Tooltip>
+          ? (
+            <Tooltip
+              title={<div style={{ whiteSpace: 'pre-wrap' }}>{profile.note}</div>}
+              overlayStyle={{ maxWidth: 320 }}
+            >
+              <div
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 10,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
+                }}
+              >
+                {profile.note}
+              </div>
+            </Tooltip>
+          )
           : <Typography.Text type="secondary">—</Typography.Text>
       )
     },
