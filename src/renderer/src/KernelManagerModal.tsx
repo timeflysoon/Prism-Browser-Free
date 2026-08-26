@@ -160,9 +160,6 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
           <Typography.Text type="secondary">当前：{engine?.label ?? '未配置'}</Typography.Text>
         </div>
         <Space>
-          {bundled?.executable && engine?.executable !== bundled.executable && (
-            <Button type="primary" onClick={() => void activateBundled()}>使用内置 {bundled.version}</Button>
-          )}
           <Button type="primary" icon={<FolderOpenOutlined />} onClick={() => void importLocal()}>导入本地构建</Button>
           <Button onClick={() => void selectManual()}>外部路径</Button>
           <Button onClick={() => void useSystem()}>系统兼容模式</Button>
