@@ -1156,6 +1156,7 @@ export default function App() {
       <ExtensionManagerModal
         open={extensionManagerOpen}
         extensions={extensions}
+        profiles={profiles}
         onClose={() => setExtensionManagerOpen(false)}
         onChanged={setExtensions}
       />
