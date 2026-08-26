@@ -409,6 +409,8 @@ export interface BrowserApi {
   extensions: {
     list: () => Promise<BrowserExtension[]>
     importDirectory: () => Promise<BrowserExtension | null>
+    // ---- 修改点 12：从 Chrome 应用商店安装。network 为 'direct'（本机直连）、'system'（跟随系统代理）或某个环境的 id（复用该环境代理下载） ----
+    installFromStore: (extensionId: string, network: string) => Promise<BrowserExtension>
     openSourceFolder: (id: string) => Promise<string>
     setGlobalEnabled: (id: string, enabled: boolean) => Promise<BrowserExtension>
     remove: (id: string) => Promise<void>
