@@ -217,12 +217,52 @@ export class ExtensionStore {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('所选目录缺少 manifest.json')
       throw error
     }
+    await inspectDirectory(source)
+    return this.stageAndCommit(source, manifest, basename(source))
+  }
+
+  // ---- 修改点 16：新增从 Chrome 应用商店安装 ----
+  async installFromStore(
+    extensionId: string,
+    proxy: { protocol: 'direct' | 'http' | 'https' | 'socks5'; host: string; port?: number; username: string; password: string } | null
+  ): Promise<BrowserExtension> {
+    if (typeof extensionId !== 'string' || !STORE_EXTENSION_ID_PATTERN.test(extensionId)) {
+      throw new Error('Chrome 应用商店扩展 ID 无效')
+    }
+    const agent = proxyAgentFor(proxy)
+    const crxBuffer = await downloadToBuffer(chromeStoreDownloadUrl(extensionId), agent)
+    const zipBuffer = stripCrxHeader(crxBuffer)
+
+    const unpackDir = join(tmpdir(), `prism-crx-${randomUUID()}`)
+    await mkdir(unpackDir, { recursive: true })
+    try {
+      await extractZip(zipBuffer, unpackDir)
+      const manifestPath = join(unpackDir, 'manifest.json')
+      let manifest: ChromeExtensionManifest
+      try {
+        if ((await stat(manifestPath)).size > 1024 * 1024) throw new Error('扩展 manifest.json 不能超过 1 MB')
+        manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as ChromeExtensionManifest
+      } catch (error) {
+        if (error instanceof SyntaxError) throw new Error('扩展 manifest.json 不是有效 JSON')
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('下载的扩展缺少 manifest.json')
+        throw error
+      }
+      await inspectDirectory(unpackDir)
+      const extension = await this.stageAndCommit(unpackDir, manifest, `chrome-store-${extensionId}`)
+      this.logger?.info('浏览器扩展已从 Chrome 商店安装', { extensionId: extension.id, storeId: extensionId, name: extension.name })
+      return extension
+    } finally {
+      await rm(unpackDir, { recursive: true, force: true })
+    }
+  }
+
+  /** importDirectory 与 installFromStore 共用的校验+落盘逻辑。 */
+  private async stageAndCommit(source: string, manifest: ChromeExtensionManifest, fallbackName: string): Promise<BrowserExtension> {
     if (manifest.manifest_version !== 2 && manifest.manifest_version !== 3) throw new Error('只支持 Manifest V2 或 V3 扩展')
     if (typeof manifest.name !== 'string' || !manifest.name.trim()) throw new Error('扩展 manifest 缺少名称')
     if (typeof manifest.version !== 'string' || !/^\d+(?:\.\d+){0,3}$/.test(manifest.version)) {
       throw new Error('扩展 manifest 版本号无效')
     }
-    await inspectDirectory(source)
 
     const id = randomUUID()
     const staging = join(this.root, `.import-${id}`)
@@ -232,7 +272,7 @@ export class ExtensionStore {
       await cp(source, join(staging, 'extension'), { recursive: true, errorOnExist: true })
       const extension: BrowserExtension = {
         id,
-        name: manifest.name.startsWith('__MSG_') ? basename(source) : manifest.name.trim(),
+        name: manifest.name.startsWith('__MSG_') ? fallbackName : manifest.name.trim(),
         version: manifest.version,
         description: typeof manifest.description === 'string' ? manifest.description.trim() : '',
         manifestVersion: manifest.manifest_version,
