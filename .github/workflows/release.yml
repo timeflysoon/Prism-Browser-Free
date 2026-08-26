@@ -177,6 +177,7 @@ jobs:
       - name: 发布 GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           VERSION="${{ needs.resolve-version.outputs.version }}"
           TAG="${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.resolve-version.outputs.version) }}"
