@@ -142,6 +142,7 @@ export function ExtensionManagerModal({ open, extensions, profiles, onClose, onC
   }
 
   return (
+    <>
     <Modal open={open} title="浏览器扩展" width={720} footer={null} onCancel={onClose} destroyOnHidden>
       {contextHolder}
       <Alert
