@@ -19,13 +19,58 @@ function errorText(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).replace(/^Error invoking remote method '[^']+': Error: /, '')
 }
 
-export function ExtensionManagerModal({ open, extensions, onClose, onChanged }: ExtensionManagerModalProps) {
+export function ExtensionManagerModal({ open, extensions, profiles, onClose, onChanged }: ExtensionManagerModalProps) {
   const [loading, setLoading] = useState(false)
   const [importing, setImporting] = useState(false)
   const [opening, setOpening] = useState<string | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
   const [toggling, setToggling] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
+
+  // ---- 修改点 8：从 Chrome 商店安装的弹窗状态 ----
+  const [storeModalOpen, setStoreModalOpen] = useState(false)
+  const [storeUrl, setStoreUrl] = useState('')
+  const [storeNetwork, setStoreNetwork] = useState<StoreDownloadNetwork>('direct')
+  const [storeInstalling, setStoreInstalling] = useState(false)
+
+  const storeNetworkOptions = [
+    { value: 'direct', label: '本机直连' },
+    { value: 'system', label: '跟随系统代理' },
+    ...profiles.map((profile) => ({
+      value: profile.id,
+      label: `#${profile.serialNumber} · ${profile.name}（${profile.proxy.protocol === 'direct' ? '本地网络' : `${profile.proxy.protocol.toUpperCase()} ${profile.proxy.host}:${profile.proxy.port}`}）`
+    }))
+  ]
+
+  function openStoreModal(): void {
+    setStoreUrl('')
+    setStoreNetwork('direct')
+    setStoreModalOpen(true)
+  }
+
+  function extractExtensionId(url: string): string | null {
+    const match = STORE_URL_PATTERN.exec(url.trim())
+    return match ? match[1] : null
+  }
+
+  async function installFromStore(): Promise<void> {
+    const extensionId = extractExtensionId(storeUrl)
+    if (!extensionId) {
+      messageApi.error('请粘贴有效的 Chrome 应用商店扩展详情页地址')
+      return
+    }
+    setStoreInstalling(true)
+    try {
+      const installed = await window.browserApi.extensions.installFromStore(extensionId, storeNetwork)
+      onChanged([...extensions.filter((item) => item.id !== installed.id), installed])
+      messageApi.success(`扩展“${installed.name}”已从 Chrome 商店安装`)
+      setStoreModalOpen(false)
+    } catch (error) {
+      messageApi.error(errorText(error))
+    } finally {
+      setStoreInstalling(false)
+    }
+  }
 
   async function refresh(): Promise<void> {
     setLoading(true)
