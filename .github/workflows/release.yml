@@ -58,7 +58,11 @@ jobs:
           cache: "npm"
 
       - name: 安装依赖
-        run: npm ci
+        # 用 npm install 而不是 npm ci：
+        # package.json 改过依赖但 lock 文件未在本地同步更新时，
+        # npm ci 会因为二者不一致直接报错退出；npm install 会自动
+        # 重新解析依赖树并就地更新 lock 文件后继续安装。
+        run: npm install
 
       - name: 同步版本号
         if: needs.resolve-version.outputs.version != ''
@@ -114,7 +118,9 @@ jobs:
           cache: "npm"
 
       - name: 安装依赖
-        run: npm ci
+        # 同上：用 npm install 代替 npm ci，避免 lock 文件与
+        # package.json 不同步时报错退出
+        run: npm install
 
       - name: 同步版本号
         if: needs.resolve-version.outputs.version != ''
