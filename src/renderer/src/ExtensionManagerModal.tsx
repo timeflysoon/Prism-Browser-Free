@@ -154,7 +154,9 @@ export function ExtensionManagerModal({ open, extensions, profiles, onClose, onC
         <Typography.Text type="secondary">导入一次后，可在不同环境中选择不同扩展组合。</Typography.Text>
         <Space>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={() => void refresh()}>刷新</Button>
-          <Button type="primary" icon={<FolderAddOutlined />} loading={importing} onClick={() => void importDirectory()}>导入扩展目录</Button>
+          <Button icon={<FolderAddOutlined />} loading={importing} onClick={() => void importDirectory()}>导入本地扩展</Button>
+          {/* ---- 修改点 9：新增“从 Chrome 商店安装”入口 ---- */}
+          <Button type="primary" icon={<CloudDownloadOutlined />} onClick={openStoreModal}>从 Chrome 商店安装</Button>
         </Space>
       </div>
       <Spin spinning={loading && extensions.length === 0}>
