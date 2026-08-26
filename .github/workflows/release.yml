@@ -174,16 +174,20 @@ jobs:
       - name: 列出即将发布的文件
         run: ls -la dist
 
-      - name: 发布 GitHub Release
+      - name: 发布 GitHub Release（固定 tag，覆盖式发布）
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
           VERSION="${{ needs.resolve-version.outputs.version }}"
-          TAG="${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.resolve-version.outputs.version) }}"
+          TAG="latest"
+
+          # 如果已存在同名 release，先删除（不报错，允许首次发布时不存在）
+          gh release delete "$TAG" --yes --cleanup-tag || true
+
           gh release create "$TAG" \
-            --title "$TAG" \
-            --draft \
+            --title "Prism Browser ${VERSION}" \
+            --latest \
             "dist/Prism-Browser-${VERSION}-macos-arm64.dmg#macOS Apple Silicon DMG" \
             "dist/Prism-Browser-${VERSION}-macos-arm64.zip#macOS Apple Silicon ZIP" \
             "dist/Prism-Browser-${VERSION}-windows-x64-portable.zip#Windows x64 portable ZIP" \
