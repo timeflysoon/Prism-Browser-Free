@@ -364,6 +364,21 @@ export function registerIpc({ profiles, settings, launcher, kernels, extensions,
     if (result.canceled || !result.filePaths[0]) return null
     return extensions.importDirectory(result.filePaths[0])
   })
+  // ---- 修改点 17：从 Chrome 应用商店安装。network 是 'direct' / 'system' / 某个环境 id ----
+  ipcMain.handle('extensions:install-from-store', async (_event, extensionId: string, network: string) => {
+    if (network === 'direct') {
+      return extensions.installFromStore(extensionId, null)
+    }
+    if (network === 'system') {
+      // 跟随系统代理：交给 Node/操作系统默认的代理设置（不显式传 agent，NODE 会读取 HTTPS_PROXY 环境变量）
+      return extensions.installFromStore(extensionId, null)
+    }
+    const sourceProfile = profiles.get(network)
+    if (sourceProfile.proxy.protocol === 'direct') {
+      return extensions.installFromStore(extensionId, null)
+    }
+    return extensions.installFromStore(extensionId, sourceProfile.proxy)
+  })
   ipcMain.handle('extensions:open-source-folder', async (_event, id: string) => {
     const path = extensions.sourcePath(id)
     const info = await lstat(path)
