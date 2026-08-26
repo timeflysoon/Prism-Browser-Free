@@ -6,9 +6,14 @@ import type { BrowserExtension, BrowserProfileView } from '../../shared/types'
 interface ExtensionManagerModalProps {
   open: boolean
   extensions: BrowserExtension[]
+  profiles: BrowserProfileView[]
   onClose: () => void
   onChanged: (extensions: BrowserExtension[]) => void
 }
+
+type StoreDownloadNetwork = 'direct' | 'system' | string
+
+const STORE_URL_PATTERN = /^https:\/\/chromewebstore\.google\.com\/detail\/[^/]+\/([a-p]{32})(?:[/?#].*)?$/
 
 function errorText(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).replace(/^Error invoking remote method '[^']+': Error: /, '')
