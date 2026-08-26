@@ -1,7 +1,7 @@
-import { DeleteOutlined, EditOutlined, FolderAddOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, List, Modal, Popconfirm, Space, Spin, Switch, Tag, Typography, message } from 'antd'
-import { useEffect, useState } from 'react'
-import type { BrowserExtension } from '../../shared/types'
+import { CloudDownloadOutlined, DeleteOutlined, EditOutlined, FolderAddOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Alert, Button, Input, List, Modal, Popconfirm, Select, Space, Spin, Switch, Tag, Typography, message } from 'antd'
+import { useState as useReactState, useEffect, useState } from 'react'
+import type { BrowserExtension, BrowserProfileView } from '../../shared/types'
 
 interface ExtensionManagerModalProps {
   open: boolean
