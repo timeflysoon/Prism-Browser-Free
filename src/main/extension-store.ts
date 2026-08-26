@@ -1,8 +1,15 @@
 import { randomUUID } from 'node:crypto'
 import { access, cp, lstat, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { basename, join, resolve, sep } from 'node:path'
+import { request as httpsRequest } from 'node:https'
+import { tmpdir } from 'node:os'
 import type { BrowserExtension } from '../shared/types'
 import type { Logger } from './app-logger'
+// ---- 修改点 14：新增依赖，用于下载 CRX 并解压 ----
+// 需要新增 npm 依赖：yauzl（解压 zip，无原生依赖）、https-proxy-agent、socks-proxy-agent（走环境代理下载时使用）
+import yauzl from 'yauzl'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import { SocksProxyAgent } from 'socks-proxy-agent'
 
 interface ChromeExtensionManifest {
   manifest_version?: number
