@@ -248,5 +248,6 @@ export function ExtensionManagerModal({ open, extensions, profiles, onClose, onC
         </Typography.Paragraph>
       </div>
     </Modal>
+    </>
   )
 }
