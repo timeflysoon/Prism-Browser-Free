@@ -708,7 +708,7 @@ export default function App() {
     {
       title: '环境',
       dataIndex: 'name',
-      width: 250,
+      width: 220,
       sorter: profileTableSorters.environment,
       render: (_value, profile) => (
         <div className="profile-name-cell">
@@ -801,7 +801,7 @@ export default function App() {
     {
       title: '分组 / 标签',
       key: 'classification',
-      width: 190,
+      width: 160,
       sorter: profileTableSorters.classification,
       render: (_value, profile) => (
         <div className="profile-tags">
