@@ -731,7 +731,7 @@ export default function App() {
       title: '备注',
       dataIndex: 'note',
       key: 'note',
-      width: 200,
+      width: 320,
       render: (_value, profile) => (
         <Popover
           trigger="click"
