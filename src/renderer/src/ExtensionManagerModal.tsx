@@ -214,6 +214,7 @@ export function ExtensionManagerModal({ open, extensions, profiles, onClose, onC
     <Modal
       open={storeModalOpen}
       title="从 Chrome 应用商店安装"
+      zIndex={1050}
       onCancel={() => { if (!storeInstalling) setStoreModalOpen(false) }}
       footer={[
         <Button key="cancel" disabled={storeInstalling} onClick={() => setStoreModalOpen(false)}>取消</Button>,
