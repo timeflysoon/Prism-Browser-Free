@@ -1094,7 +1094,7 @@ export default function App() {
                   onChange: (keys) => setSelectedIds(keys.map(String))
                 }}
                 pagination={profiles.length > 12 ? { pageSize: 12 } : false}
-                scroll={{ x: 1360 }}
+                scroll={{ x: 1340 }}
                 locale={{
                   emptyText: (
                     <Empty description="还没有浏览器环境">
