@@ -708,7 +708,7 @@ export default function App() {
     {
       title: '环境',
       dataIndex: 'name',
-      width: 220,
+      width: 200,
       sorter: profileTableSorters.environment,
       render: (_value, profile) => (
         <div className="profile-name-cell">
@@ -731,7 +731,7 @@ export default function App() {
       title: '备注',
       dataIndex: 'note',
       key: 'note',
-      width: 300,
+      width: 270,
       render: (_value, profile) => (
         <Popover
           trigger="click"
@@ -801,7 +801,7 @@ export default function App() {
     {
       title: '分组 / 标签',
       key: 'classification',
-      width: 160,
+      width: 150,
       sorter: profileTableSorters.classification,
       render: (_value, profile) => (
         <div className="profile-tags">
@@ -1094,7 +1094,7 @@ export default function App() {
                   onChange: (keys) => setSelectedIds(keys.map(String))
                 }}
                 pagination={profiles.length > 12 ? { pageSize: 12 } : false}
-                scroll={{ x: 1355 }}
+                scroll={{ x: 1295 }}
                 locale={{
                   emptyText: (
                     <Empty description="还没有浏览器环境">
