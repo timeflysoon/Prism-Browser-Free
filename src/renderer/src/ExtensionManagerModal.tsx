@@ -209,5 +209,43 @@ export function ExtensionManagerModal({ open, extensions, profiles, onClose, onC
         “全局启用”会让所有现有及以后新建的环境加载该扩展；扩展开关或源码修改需关闭并重新打开环境后生效。
       </Typography.Paragraph>
     </Modal>
+    {/* ---- 修改点 10：从 Chrome 应用商店安装的二级弹窗 ---- */}
+    <Modal
+      open={storeModalOpen}
+      title="从 Chrome 应用商店安装"
+      onCancel={() => { if (!storeInstalling) setStoreModalOpen(false) }}
+      footer={[
+        <Button key="cancel" disabled={storeInstalling} onClick={() => setStoreModalOpen(false)}>取消</Button>,
+        <Button
+          key="install"
+          type="primary"
+          loading={storeInstalling}
+          disabled={!extractExtensionId(storeUrl)}
+          onClick={() => void installFromStore()}
+        >下载并安装</Button>
+      ]}
+    >
+      <Typography.Text type="secondary">
+        粘贴扩展详情页地址。应用会从 Google 官方服务下载并校验扩展，安装后可在环境设置中启用。
+      </Typography.Text>
+      <Input
+        style={{ marginTop: 12 }}
+        placeholder="https://chromewebstore.google.com/detail/.../扩展ID"
+        value={storeUrl}
+        onChange={(event) => setStoreUrl(event.target.value)}
+      />
+      <div style={{ marginTop: 16 }}>
+        <Typography.Text strong>下载网络</Typography.Text>
+        <Select
+          style={{ width: '100%', marginTop: 8 }}
+          value={storeNetwork}
+          options={storeNetworkOptions}
+          onChange={setStoreNetwork}
+        />
+        <Typography.Paragraph type="secondary" style={{ marginTop: 8, marginBottom: 0 }}>
+          无法直接访问 Google 服务时，可使用系统代理或已有环境的代理下载。这里只用于下载扩展，不会启动该环境。
+        </Typography.Paragraph>
+      </div>
+    </Modal>
   )
 }
