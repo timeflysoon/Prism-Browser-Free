@@ -118,7 +118,21 @@ button, input, textarea { font: inherit; }
 .proxy-provider-hint { margin-top: 10px; }
 .dns-protection-hint { margin-top: 10px; }
 .kernel-notice { margin: 10px 0 18px; }
-.kernel-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.kernel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+.kernel-toolbar > div:first-child {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+.kernel-toolbar .ant-space {
+  flex-wrap: wrap;
+}
 .kernel-toolbar > div > span { display: block; }
 .kernel-toolbar > div > span + span { margin-top: 4px; font-size: 12px; }
 .kernel-progress { margin: 14px 0; padding: 13px 15px 6px; border: 1px solid #e4e7ff; border-radius: 10px; background: #f7f8ff; }
