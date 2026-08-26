@@ -84,6 +84,7 @@ const api: BrowserApi = {
   extensions: {
     list: () => ipcRenderer.invoke('extensions:list'),
     importDirectory: () => ipcRenderer.invoke('extensions:import-directory'),
+    installFromStore: (extensionId: string, network: string) => ipcRenderer.invoke('extensions:install-from-store', extensionId, network),
     openSourceFolder: (id: string) => ipcRenderer.invoke('extensions:open-source-folder', id),
     setGlobalEnabled: (id: string, enabled: boolean) => ipcRenderer.invoke('extensions:set-global-enabled', id, enabled),
     remove: (id: string) => ipcRenderer.invoke('extensions:remove', id)
