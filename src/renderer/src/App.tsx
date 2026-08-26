@@ -778,15 +778,16 @@ export default function App() {
       )
     },
     {
-      title: '分组 / 标签',
-      key: 'classification',
-      width: 190,
-      sorter: profileTableSorters.classification,
+      title: '代理',
+      dataIndex: 'proxy',
+      width: 220,
+      sorter: profileTableSorters.proxy,
       render: (_value, profile) => (
-        <div className="profile-tags">
-          <Tag icon={<FolderOutlined />}>{profile.group || '未分组'}</Tag>
-          {profile.tags.slice(0, 2).map((tag) => <Tag key={tag}>{tag}</Tag>)}
-          {profile.tags.length > 2 && <Tooltip title={profile.tags.slice(2).join('、')}><Tag>+{profile.tags.length - 2}</Tag></Tooltip>}
+        <div className="proxy-cell">
+          <div>{profile.proxy.protocol === 'direct'
+            ? <Typography.Text type="secondary">本地网络</Typography.Text>
+            : <><Tag>{profile.proxy.protocol.toUpperCase()}</Tag>{profile.proxy.host}:{profile.proxy.port}</>}</div>
+          {proxyCheckTag(profile)}
         </div>
       )
     },
@@ -798,16 +799,15 @@ export default function App() {
       render: (_value, profile) => statusTag(profile)
     },
     {
-      title: '代理',
-      dataIndex: 'proxy',
-      width: 220,
-      sorter: profileTableSorters.proxy,
+      title: '分组 / 标签',
+      key: 'classification',
+      width: 190,
+      sorter: profileTableSorters.classification,
       render: (_value, profile) => (
-        <div className="proxy-cell">
-          <div>{profile.proxy.protocol === 'direct'
-            ? <Typography.Text type="secondary">本地网络</Typography.Text>
-            : <><Tag>{profile.proxy.protocol.toUpperCase()}</Tag>{profile.proxy.host}:{profile.proxy.port}</>}</div>
-          {proxyCheckTag(profile)}
+        <div className="profile-tags">
+          <Tag icon={<FolderOutlined />}>{profile.group || '未分组'}</Tag>
+          {profile.tags.slice(0, 2).map((tag) => <Tag key={tag}>{tag}</Tag>)}
+          {profile.tags.length > 2 && <Tooltip title={profile.tags.slice(2).join('、')}><Tag>+{profile.tags.length - 2}</Tag></Tooltip>}
         </div>
       )
     },
