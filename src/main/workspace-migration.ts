@@ -359,7 +359,9 @@ export class WorkspaceMigrationManager {
     const staging = await mkdtemp(join(this.profiles.vaultPath, '.migration-import-'))
     const decipher = createDecipheriv('aes-256-gcm', key, nonce)
     decipher.setAAD(headerBytes!); decipher.setAuthTag(authTag!)
-    const reader = new DecryptedReader(createReadStream(source, { start: payloadOffset!, end: sourceInfo.size - AUTH_TAG_BYTES - 1 }).pipe(decipher))
+    const sourceStream = createReadStream(source, { start: payloadOffset!, end: sourceInfo.size - AUTH_TAG_BYTES - 1 })
+    sourceStream.on('error', (streamError) => decipher.destroy(streamError))
+    const reader = new DecryptedReader(sourceStream.pipe(decipher))
     let manifest: ArchiveManifest; let fileCount = 0; let totalBytes = 0
     const digest = createHash('sha256')
     try {
