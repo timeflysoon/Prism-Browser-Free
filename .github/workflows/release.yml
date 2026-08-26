@@ -26,6 +26,9 @@ jobs:
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
       - name: 解析版本号
         id: set-version
         run: |
@@ -34,7 +37,7 @@ jobs:
           elif [ "${{ github.ref_type }}" = "tag" ]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
-            VERSION=""
+            VERSION=$(node -p "require('./package.json').version")
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -62,10 +65,13 @@ jobs:
         run: npm pkg set version=${{ needs.resolve-version.outputs.version }}
 
       - name: 构建 macOS 安装包
-        # 明确关闭自动代码签名探测和公证，产出未签名构建
+        # 明确关闭自动代码签名探测和公证，产出未签名构建；
+        # 显式传 --publish never 避免 electron-builder 在 CI 中自动尝试发布到 GitHub
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npm run dist:mac
+        run: |
+          npm run build
+          npx electron-builder --mac dmg zip --publish never
 
       - name: 统一重命名为发布规范文件名
         # 不依赖 package.json 里的 artifactName 宏，直接强制改成与
@@ -116,8 +122,11 @@ jobs:
 
       - name: 构建 Windows 安装包
         # 只构建 msi 和 zip 两个目标（与实际发布保持一致，不生成独立的
-        # portable .exe 目标）；zip 会在下一步重命名为带 -portable 后缀
-        run: npx electron-builder --win msi zip --x64
+        # portable .exe 目标）；zip 会在下一步重命名为带 -portable 后缀；
+        # 显式传 --publish never 避免 electron-builder 在 CI 中自动尝试发布到 GitHub
+        run: |
+          npm run build
+          npx electron-builder --win msi zip --x64 --publish never
 
       - name: 统一重命名为发布规范文件名
         # 强制改成与 v0.3.10 一致的命名：
@@ -166,10 +175,16 @@ jobs:
         run: ls -la dist
 
       - name: 发布 GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.resolve-version.outputs.version) }}
-          name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.resolve-version.outputs.version) }}
-          draft: true
-          files: |
-            dist/*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.resolve-version.outputs.version }}"
+          TAG="${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.resolve-version.outputs.version) }}"
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --draft \
+            "dist/Prism-Browser-${VERSION}-macos-arm64.dmg#macOS Apple Silicon DMG" \
+            "dist/Prism-Browser-${VERSION}-macos-arm64.zip#macOS Apple Silicon ZIP" \
+            "dist/Prism-Browser-${VERSION}-windows-x64-portable.zip#Windows x64 portable ZIP" \
+            "dist/Prism-Browser-${VERSION}-windows-x64.msi#Windows x64 installer" \
+            "dist/SHA256SUMS.txt#SHA-256 checksums"
