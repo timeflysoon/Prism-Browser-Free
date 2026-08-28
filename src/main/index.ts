@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, shell } from 'electron'
+import { appendFileSync, mkdirSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { BrowserLauncher } from './browser-launcher'
 import { registerIpc } from './ipc'
