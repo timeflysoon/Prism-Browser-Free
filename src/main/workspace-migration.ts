@@ -144,28 +144,35 @@ class DecryptedReader {
   }
 
   async copyExactly(size: number, target: string, digest: ReturnType<typeof createHash>): Promise<void> {
+    if (!Number.isSafeInteger(size) || size < 0) throw new Error('迁移包文件长度无效')
     await mkdir(dirname(target), { recursive: true })
-    const output = createWriteStream(target, { flags: 'wx', mode: 0o600 })
     let remaining = size
-    try {
-      while (remaining > 0) {
-        if (!this.buffer.length) {
-          const next = await this.iterator.next()
-          if (next.done) throw new Error('迁移包文件数据提前结束')
-          this.buffer = Buffer.isBuffer(next.value) ? next.value : Buffer.from(next.value)
-        }
-        const length = Math.min(remaining, this.buffer.length)
-        const chunk = this.buffer.subarray(0, length)
-        this.buffer = this.buffer.subarray(length)
-        digest.update(chunk)
-        remaining -= length
-        if (!output.write(chunk)) await once(output, 'drain')
+    const source = new Readable({
+      read: () => {
+        void (async () => {
+          try {
+            if (remaining <= 0) { source.push(null); return }
+            if (!this.buffer.length) {
+              const next = await this.iterator.next()
+              if (next.done) { source.destroy(new Error('迁移包文件数据提前结束')); return }
+              this.buffer = Buffer.isBuffer(next.value) ? next.value : Buffer.from(next.value)
+            }
+            const length = Math.min(remaining, this.buffer.length)
+            const chunk = this.buffer.subarray(0, length)
+            this.buffer = this.buffer.subarray(length)
+            digest.update(chunk)
+            remaining -= length
+            source.push(chunk)
+          } catch (error) {
+            source.destroy(error instanceof Error ? error : new Error(String(error)))
+          }
+        })()
       }
-      output.end()
-      await once(output, 'finish')
+    })
+    try {
+      await pipeline(source, createWriteStream(target, { flags: 'wx', mode: 0o600 }))
     } catch (error) {
-      output.destroy()
-      await rm(target, { force: true })
+      await rm(target, { force: true }).catch(() => undefined)
       throw error
     }
   }
