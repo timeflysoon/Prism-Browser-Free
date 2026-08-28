@@ -310,7 +310,7 @@ export class ExtensionStore {
     if (!/^[a-f\d-]{36}$/i.test(id) || !this.extensions.has(id)) throw new Error('浏览器扩展不存在')
     const recycle = join(this.vaultPath, 'recycle-bin', 'extensions')
     await mkdir(recycle, { recursive: true })
-    await rename(join(this.root, id), join(recycle, `${id}-${Date.now()}`))
+    await renameWithRetry(join(this.root, id), join(recycle, `${id}-${Date.now()}`))
     this.extensions.delete(id)
     this.logger?.info('浏览器扩展已移入回收目录', { extensionId: id })
   }
