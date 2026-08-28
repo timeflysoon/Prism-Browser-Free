@@ -38,6 +38,21 @@ async function renameWithRetry(from: string, to: string, attempts = 5, delayMs =
   }
 }
 
+/** 清理临时目录用，同样可能撞上瞬时文件占用；这里失败后果很轻（残留一个临时目录），最多重试 1 次，静默放弃不向外抛错。 */
+async function rmWithRetry(target: string, attempts = 2, delayMs = 150): Promise<void> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      await rm(target, { recursive: true, force: true })
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      const transient = code === 'EPERM' || code === 'EBUSY' || code === 'EACCES'
+      if (!transient || attempt === attempts) return // 第二次仍失败也不抛出，只留下临时目录
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, delayMs * attempt))
+    }
+  }
+}
+
 // ---- 修改点 15：CRX 下载相关辅助函数 ----
 
 /** 根据用户选择的下载网络，构造对应的代理 Agent；'direct' 和空值表示不使用代理。 */
