@@ -282,7 +282,7 @@ export class ExtensionStore {
       this.logger?.info('浏览器扩展已从 Chrome 商店安装', { extensionId: extension.id, storeId: extensionId, name: extension.name })
       return extension
     } finally {
-      await rm(unpackDir, { recursive: true, force: true })
+      await rmWithRetry(unpackDir)
     }
   }
 
