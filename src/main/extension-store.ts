@@ -296,7 +296,7 @@ export class ExtensionStore {
         globalEnabled: false
       }
       await writeFile(join(staging, 'metadata.json'), JSON.stringify(extension, null, 2), { encoding: 'utf8', mode: 0o600 })
-      await rename(staging, target)
+      await renameWithRetry(staging, target)
       this.extensions.set(id, extension)
       this.logger?.info('浏览器扩展已导入', { extensionId: id, name: extension.name, version: extension.version })
       return { ...extension }
