@@ -23,6 +23,21 @@ const MAX_EXTENSION_FILES = 20_000
 const MAX_CRX_BYTES = 200 * 1024 * 1024
 const STORE_EXTENSION_ID_PATTERN = /^[a-p]{32}$/
 
+/** Windows 下 rename 可能因杀毒软件/索引服务对目标目录内文件的瞬时占用而抛 EPERM/EBUSY，重试几次通常就能绕过去。 */
+async function renameWithRetry(from: string, to: string, attempts = 5, delayMs = 150): Promise<void> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      await rename(from, to)
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      const transient = code === 'EPERM' || code === 'EBUSY' || code === 'EACCES'
+      if (!transient || attempt === attempts) throw error
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, delayMs * attempt))
+    }
+  }
+}
+
 // ---- 修改点 15：CRX 下载相关辅助函数 ----
 
 /** 根据用户选择的下载网络，构造对应的代理 Agent；'direct' 和空值表示不使用代理。 */
