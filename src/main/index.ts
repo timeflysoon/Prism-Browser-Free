@@ -148,14 +148,29 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
+const CRASH_FALLBACK_MAX_BYTES = 2 * 1024 * 1024
+
+function rotateCrashFallbackIfNeeded(file: string): void {
+  try {
+    const stats = statSync(file)
+    if (stats.size < CRASH_FALLBACK_MAX_BYTES) return
+    // 同步 rename，跟 appendFileSync 一起保证兜底语义
+    renameSync(file, `${file}.previous`)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+}
+
 function writeCrashFallback(tag: string, error: unknown): void {
   // 不依赖 AppLogger 内部的缓冲/异步写入——uncaughtExceptionMonitor 之后进程会被 Node 立刻终止，
   // 只有同步写入才能保证在进程死掉之前真正落盘
   try {
     const dir = join(app.getPath('userData'), 'vault')
     mkdirSync(dir, { recursive: true })
+    const file = join(dir, 'crash-fallback.log')
+    rotateCrashFallbackIfNeeded(file)
     const text = `[${new Date().toISOString()}] ${tag}\n${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n\n`
-    appendFileSync(join(dir, 'crash-fallback.log'), text)
+    appendFileSync(file, text)
   } catch { /* 这里已经是最后一道兜底，失败了也不能再抛 */ }
 }
 
