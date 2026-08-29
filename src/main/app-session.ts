@@ -174,6 +174,6 @@ export class AppSessionTracker {
     const temporary = `${path}.${process.pid}.tmp`
     await writeFile(temporary, JSON.stringify(value, null, 2), { encoding: 'utf8', mode: 0o600 })
     await rm(path, { force: true })
-    await rename(temporary, path)
+    await renameWithRetry(temporary, path)
   }
 }
