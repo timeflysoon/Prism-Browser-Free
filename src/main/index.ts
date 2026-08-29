@@ -48,7 +48,11 @@ function createWindow(): BrowserWindow {
 
   window.once('ready-to-show', () => window.show())
   window.webContents.on('console-message', (event) => {
-    if (event.level === 'error') logger?.error('Renderer console error', event.message)
+    if (event.level === 'error') {
+      logger?.error('Renderer console error', { level: event.level, message: event.message, source: event.sourceId, line: event.lineNumber })
+    } else if (event.level === 'warning') {
+      logger?.info('Renderer console warning', { level: event.level, message: event.message, source: event.sourceId, line: event.lineNumber })
+    }
   })
   window.webContents.on('did-fail-load', (_event, code, description, url) => {
     logger?.error('Renderer load failed', { code, description, url })
