@@ -3,6 +3,21 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { AppRecoveryStatus } from '../shared/types'
 
+/** Windows 下 rename 可能因杀毒软件/索引服务对目标目录内文件的瞬时占用而抛 EPERM/EBUSY，重试几次通常就能绕过去。 */
+async function renameWithRetry(from: string, to: string, attempts = 5, delayMs = 150): Promise<void> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      await rename(from, to)
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      const transient = code === 'EPERM' || code === 'EBUSY' || code === 'EACCES'
+      if (!transient || attempt === attempts) throw error
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, delayMs * attempt))
+    }
+  }
+}
+
 interface AppSessionMarker {
   schemaVersion: 1
   sessionId: string
