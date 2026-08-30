@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-作者：[DFarm](https://x.com/DFarm_club)
+作者：[timeflysoon](https://github.com/timeflysoon/Prism-Browser-Free))
 
 Prism Browser 是一个基于定制 Chromium 的本地指纹浏览器环境管理器。每个环境拥有独立的 Cookie、缓存、扩展数据、代理设置和指纹配置，适合管理多个相互隔离的浏览器身份。
 
