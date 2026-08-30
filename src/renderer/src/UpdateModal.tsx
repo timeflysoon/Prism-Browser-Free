@@ -1,13 +1,12 @@
-import { Alert, Button, Modal, Space, Tag, Typography, message } from 'antd'
+import { Alert, Button, Modal, Progress, Space, Tag, Typography, message } from 'antd'
 import { useState } from 'react'
-import type { AnnouncementStatus, AppUpdateStatus } from '../../shared/types'
+import type { AppUpdateStatus } from '../../shared/types'
 
 interface UpdateModalProps {
   open: boolean
   appStatus: AppUpdateStatus | null
-  announcementStatus: AnnouncementStatus | null
   onClose: () => void
-  onAnnouncementChanged: (status: AnnouncementStatus) => void
+  onUpdateChanged: (status: AppUpdateStatus) => void
 }
 
 function errorText(error: unknown): string {
@@ -18,9 +17,8 @@ function errorText(error: unknown): string {
 export function UpdateModal({
   open,
   appStatus,
-  announcementStatus,
   onClose,
-  onAnnouncementChanged
+  onUpdateChanged
 }: UpdateModalProps) {
   const [busy, setBusy] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
@@ -28,7 +26,7 @@ export function UpdateModal({
   async function check(): Promise<void> {
     setBusy(true)
     try {
-      onAnnouncementChanged(await window.browserApi.announcements.check())
+      onUpdateChanged(await window.browserApi.updates.check())
     } catch (error) {
       messageApi.error(errorText(error))
     } finally {
@@ -36,10 +34,10 @@ export function UpdateModal({
     }
   }
 
-  async function openDownload(): Promise<void> {
+  async function download(): Promise<void> {
     setBusy(true)
     try {
-      await window.browserApi.announcements.openAction()
+      onUpdateChanged(await window.browserApi.updates.download())
     } catch (error) {
       messageApi.error(errorText(error))
     } finally {
@@ -47,17 +45,25 @@ export function UpdateModal({
     }
   }
 
-  const announcement = announcementStatus?.announcement
-  const isAvailable = announcementStatus?.state === 'available'
-  const isCurrent = announcementStatus?.state === 'current'
-  const alertType = announcementStatus?.state === 'error'
+  async function openInstaller(): Promise<void> {
+    setBusy(true)
+    try {
+      await window.browserApi.updates.openInstaller()
+    } catch (error) {
+      messageApi.error(errorText(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const stage = appStatus?.stage
+  const isAvailable = stage === 'available'
+  const isDownloading = stage === 'downloading'
+  const isReady = stage === 'ready'
+  const isCurrent = stage === 'current'
+  const alertType = stage === 'error'
     ? 'error'
-    : isAvailable ? 'info' : isCurrent ? 'success' : 'warning'
-  const statusDescription = announcementStatus?.state === 'none'
-    ? '暂无适用于当前系统的更新。'
-    : announcementStatus?.state === 'disabled'
-      ? '暂时无法检查更新。'
-      : announcement?.body
+    : isAvailable || isReady ? 'info' : isCurrent ? 'success' : 'warning'
 
   return (
     <Modal open={open} title="应用更新" footer={null} onCancel={onClose} destroyOnHidden>
@@ -69,29 +75,25 @@ export function UpdateModal({
           </Typography.Title>
           <Space wrap>
             <Tag>当前版本 {appStatus?.currentVersion ?? '未知'}</Tag>
-            {announcement?.latestVersion && <Tag color={isAvailable ? 'blue' : 'green'}>最新版本 {announcement.latestVersion}</Tag>}
+            {appStatus?.latestVersion && <Tag color={isAvailable || isDownloading || isReady ? 'blue' : 'green'}>最新版本 {appStatus.latestVersion}</Tag>}
           </Space>
         </div>
         <Alert
           showIcon
           type={alertType}
-          title={busy && !announcementStatus ? '正在获取最新版本公告…' : announcementStatus?.message ?? '正在读取更新状态…'}
-          description={statusDescription}
+          title={busy && !appStatus ? '正在检查更新…' : appStatus?.message ?? '正在读取更新状态…'}
+          description={appStatus?.notes}
         />
-        {announcement && (
-          <div>
-            <Typography.Title level={5} style={{ marginBottom: 4 }}>{announcement.title}</Typography.Title>
-            <Typography.Text type="secondary">
-              发布时间：{new Date(announcement.publishedAt).toLocaleString('zh-CN', { hour12: false })}
-            </Typography.Text>
-          </div>
+        {isDownloading && (
+          <Progress percent={appStatus?.progress ?? 0} status="active" />
         )}
         <Space wrap>
           <Button loading={busy} onClick={() => void check()}>重新检查</Button>
-          {isAvailable && announcement?.action && (
-            <Button type="primary" loading={busy} onClick={() => void openDownload()}>
-              {announcement.action.label}
-            </Button>
+          {isAvailable && (
+            <Button type="primary" loading={busy} onClick={() => void download()}>下载更新</Button>
+          )}
+          {isReady && (
+            <Button type="primary" loading={busy} onClick={() => void openInstaller()}>打开安装程序</Button>
           )}
         </Space>
       </Space>
