@@ -3,8 +3,8 @@
   "version": "0.2.0-beta.1",
   "private": true,
   "author": {
-    "name": "DFarm",
-    "url": "https://x.com/DFarm_club"
+    "name": "timeflysoon",
+    "url": "https://github.com/timeflysoon"
   },
   "description": "Open-source local-first multi-profile fingerprint browser",
   "main": "out/main/index.js",
@@ -123,10 +123,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DFarm6/Prism-Browser-Community.git"
+    "url": "https://github.com/timeflysoon/Prism-Browser-Free.git"
   },
-  "homepage": "https://github.com/DFarm6/Prism-Browser-Community#readme",
+  "homepage": "https://github.com/timeflysoon/Prism-Browser-Free#readme",
   "bugs": {
-    "url": "https://github.com/DFarm6/Prism-Browser-Community/issues"
+    "url": "https://github.com/timeflysoon/Prism-Browser-Free/issues"
   }
 }
