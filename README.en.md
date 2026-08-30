@@ -162,16 +162,6 @@ Community includes the complete local browser-profile management experience and 
 | Profile duplication, groups, bulk operations, and local migration | ✓ |
 | Community fingerprint kernel distributed with the app | ✓ |
 
-### Pro Features
-
-- **Official newer kernels**: use newer kernels distributed with Prism Browser releases without compiling them locally.
-- **Local automation API**: query, launch, and close selected browser profiles on the local machine using a temporary access token. The API is not exposed to the public internet.
-- **Local scheduled tasks**: automatically launch and close profiles once, daily, or weekly for recurring local workflows.
-- **Local AI through MCP**: grant an AI access only to selected profiles. It can visit pages, read page content, click elements, and fill forms; access can be stopped or revoked at any time.
-- **Local-first data**: both Community and Pro store profile data on the user's device. Upgrading does not upload browser profiles, cookies, extension data, or proxy credentials.
-
-Pro is licensed for one device for one year. One activation code can be bound to one device at a time. After deactivation, the remaining license term can be used on another device. Expiration or deactivation does not delete local profiles, and Community features remain available.
-
 ## Security Reports
 
 Do not post activation codes, proxy passwords, cookies, wallet information, complete browser profiles, private keys, or diagnostic files containing personal data in public issues. When reporting a security problem, provide minimal reproduction steps, affected versions, platform, and impact after removing sensitive data.
