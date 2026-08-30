@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-Author:[timeflysoon](https://github.com/timeflysoon/Prism-Browser-Free)
+Author: [timeflysoon](https://github.com/timeflysoon/Prism-Browser-Free)
 
 Prism Browser is a local fingerprint-browser profile manager built on a customized Chromium. Each profile has independent cookies, cache, extension data, proxy settings, and fingerprint configuration, making it suitable for managing multiple isolated browser identities.
 
