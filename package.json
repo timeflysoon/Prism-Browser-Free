@@ -91,7 +91,7 @@
       "hardenedRuntime": true,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
-      "signIgnore": "[/\\\\]Contents[/\\\\]Resources[/\\\\](?:kernels[/\\\\](?:current|available[/\\\\]\\d+(?:\\.\\d+){3})[/\\\\]Chromium\\.app|pro-agent[/\\\\]prism-pro-agent(?:-[A-Za-z0-9._-]+)?)(?:[/\\\\]|$)"
+      "signIgnore": "[/\\\\]Contents[/\\\\]Resources[/\\\\]kernels[/\\\\](?:current|available[/\\\\]\\d+(?:\\.\\d+){3})[/\\\\]Chromium\\.app(?:[/\\\\]|$)"
     },
     "win": {
       "icon": "build/icon.ico",
