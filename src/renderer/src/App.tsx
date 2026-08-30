@@ -1107,9 +1107,8 @@ export default function App() {
       <UpdateModal
         open={updateModalOpen}
         appStatus={updateStatus}
-        announcementStatus={announcementStatus}
         onClose={() => setUpdateModalOpen(false)}
-        onAnnouncementChanged={setAnnouncementStatus}
+        onUpdateChanged={setUpdateStatus}
       />
       <WorkspaceMigrationModal
         mode={migrationMode}
