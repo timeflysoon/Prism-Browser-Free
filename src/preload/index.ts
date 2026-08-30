@@ -69,11 +69,6 @@ const api: BrowserApi = {
       return () => ipcRenderer.removeListener('updates:changed', handler)
     }
   },
-  announcements: {
-    status: () => ipcRenderer.invoke('announcements:status'),
-    check: () => ipcRenderer.invoke('announcements:check'),
-    openAction: () => ipcRenderer.invoke('announcements:open-action')
-  },
   proxy: {
     test: (config, profileId) => ipcRenderer.invoke('proxy:test', config, profileId)
   },
