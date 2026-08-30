@@ -110,9 +110,8 @@ app.whenReady().then(async () => {
   const updater = new UpdateManager(vaultPath, app.getVersion(), process.resourcesPath, (status) => {
     mainWindow?.webContents.send('updates:changed', status)
   }, logger)
-  const announcements = new AnnouncementManager(process.resourcesPath, app.getVersion(), logger)
   await updater.initialize()
-  registerIpc({ profiles, settings, launcher, kernels, extensions, cookies, logger, backups, workspaceMigration, appSession, updater, announcements })
+  registerIpc({ profiles, settings, launcher, kernels, extensions, cookies, logger, backups, workspaceMigration, appSession, updater })
   mainWindow = createWindow()
 
   app.on('activate', () => {
