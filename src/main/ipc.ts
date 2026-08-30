@@ -338,13 +338,6 @@ export function registerIpc({ profiles, settings, launcher, kernels, extensions,
     const error = await shell.openPath(await updater.downloadedPath())
     if (error) throw new Error(`无法打开更新安装程序：${error}`)
   })
-  ipcMain.handle('announcements:status', () => announcements.status())
-  ipcMain.handle('announcements:check', () => announcements.check())
-  ipcMain.handle('announcements:open-action', async () => {
-    const status = announcements.status()
-    if (status.state !== 'available' || !status.announcement?.action) throw new Error('当前公告没有可打开的链接')
-    await shell.openExternal(status.announcement.action.url)
-  })
   ipcMain.handle('proxy:test', (_event, config, profileId?: string) => {
     const validated = validateProxyConfig(config)
     const profile = profileId ? profiles.get(profileId) : undefined
