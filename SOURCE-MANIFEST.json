@@ -99,11 +99,6 @@
       "sha256": "21e94b6466ae22af699769e1a6ba219a82dc079f83a29d777a55209b0ae44467"
     },
     {
-      "path": "build/license-config.example.json",
-      "size": 225,
-      "sha256": "d6075f9c61992ab795744341c296a2ccbceda0a00eb06c09e62c072ec078aa63"
-    },
-    {
       "path": "build/update-config.beta.example.json",
       "size": 271,
       "sha256": "ebb66adcb12038abb37feb687f0336d3c6efed0e9cc0315f4321a84ccb010f6b"
