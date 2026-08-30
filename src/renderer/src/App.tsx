@@ -887,7 +887,7 @@ export default function App() {
           <AppstoreAddOutlined /><span>浏览器扩展</span><b>{extensions.length || ''}</b>
         </button>
         <button className="nav-item sidebar-action" onClick={() => setUpdateModalOpen(true)}>
-          <DownloadOutlined /><span>应用更新</span><b>{announcementStatus?.state === 'available' ? '1' : ''}</b>
+          <DownloadOutlined /><span>应用更新</span><b>{updateStatus?.stage === 'available' || updateStatus?.stage === 'ready' ? '1' : ''}</b>
         </button>
         <div className="sidebar-spacer" />
         <button className="engine-card" onClick={() => setKernelManagerOpen(true)}>
