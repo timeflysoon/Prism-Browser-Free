@@ -16,7 +16,6 @@ import { AppSessionTracker } from './app-session'
 import { UpdateManager } from './update-manager'
 import { migrateMacLegacyKernelSelection } from './browser-locator'
 import { WorkspaceMigrationManager } from './workspace-migration'
-import { AnnouncementManager } from './announcement-manager'
 
 let mainWindow: BrowserWindow | null = null
 let launcher: BrowserLauncher | null = null
