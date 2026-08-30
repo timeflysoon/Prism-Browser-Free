@@ -142,7 +142,6 @@ export default function App() {
   const [storageLoading, setStorageLoading] = useState(false)
   const [updateStatus, setUpdateStatus] = useState<AppUpdateStatus | null>(null)
   const [updateModalOpen, setUpdateModalOpen] = useState(false)
-  const [announcementStatus, setAnnouncementStatus] = useState<AnnouncementStatus | null>(null)
   const [migrationMode, setMigrationMode] = useState<'export' | 'import' | null>(null)
   const [migrationBusy, setMigrationBusy] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
