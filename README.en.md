@@ -150,21 +150,17 @@ Open the **Browser Kernels** page in Prism Browser and select **Import Local Bui
 
 Verify the kernel after importing it, then make it the active kernel. Existing profiles retain their data and settings.
 
-## Community and Pro
+## Community
 
-Community includes the complete local browser-profile management experience and remains free to use. Prism Pro adds professional features for automation, recurring workflows, and local AI collaboration.
+Community includes the complete local browser-profile management experience and remains free to use.
 
-| Feature | Community | Prism Pro |
-| --- | :---: | :---: |
-| Unlimited local browser profiles | ✓ | ✓ |
-| Fingerprint configuration, proxies, and WebRTC leak prevention | ✓ | ✓ |
-| Independent cookies, cache, extensions, and browser data | ✓ | ✓ |
-| Profile duplication, groups, bulk operations, and local migration | ✓ | ✓ |
-| Community fingerprint kernel distributed with the app | ✓ | ✓ |
-| Officially distributed newer kernels | — | ✓ |
-| Local automation API | — | ✓ |
-| Local scheduled tasks | — | ✓ |
-| Local AI control through MCP | — | ✓ |
+| Feature | Community |
+| --- | :---: |
+| Unlimited local browser profiles | ✓ |
+| Fingerprint configuration, proxies, and WebRTC leak prevention | ✓ |
+| Independent cookies, cache, extensions, and browser data | ✓ |
+| Profile duplication, groups, bulk operations, and local migration | ✓ |
+| Community fingerprint kernel distributed with the app | ✓ |
 
 ### Pro Features
 
