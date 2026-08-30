@@ -124,11 +124,6 @@
       "sha256": "8333369870f96993259ffe078b0f0a1350b4714721c8033a073491e88ef76e05"
     },
     {
-      "path": "src/main/announcement-manager.ts",
-      "size": 7333,
-      "sha256": "2801664ede5cbb8420860364cf77cecab9ba5eac2a7c83df091303aebd96b3c2"
-    },
-    {
       "path": "src/main/app-logger.ts",
       "size": 2036,
       "sha256": "96a0afb28b0d0b5a9cd7bde552f05456dd459dbc43ab3acdd6beec185b90bc65"
