@@ -22,25 +22,6 @@ export interface ProfileLaunchOptions {
 }
 export type EnginePreference = 'auto' | 'bundled' | 'system'
 
-export interface ProductAnnouncement {
-  id: string
-  title: string
-  body: string
-  severity: 'info' | 'warning' | 'critical'
-  publishedAt: string
-  expiresAt?: string
-  minimumVersion?: string
-  latestVersion?: string
-  platforms: Array<'all' | 'darwin' | 'win32'>
-  action?: { label: string; url: string }
-}
-
-export interface AnnouncementStatus {
-  state: 'disabled' | 'none' | 'current' | 'available' | 'error'
-  message: string
-  announcement?: ProductAnnouncement
-}
-
 export interface ProfileWindowConfig {
   mode: 'auto' | 'custom'
   x: number
