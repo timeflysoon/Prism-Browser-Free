@@ -941,17 +941,15 @@ export default function App() {
             </Space>
           </header>
 
-          {announcementStatus?.state === 'available' && announcementStatus.announcement && (
+          {(updateStatus?.stage === 'available' || updateStatus?.stage === 'ready') && (
             <Alert
               className="engine-alert"
-              type={announcementStatus.announcement.severity === 'critical' ? 'error' : announcementStatus.announcement.severity}
+              type="info"
               showIcon
               closable
-              title={announcementStatus.announcement.title}
-              description={announcementStatus.announcement.body}
-              action={announcementStatus.announcement.action
-                ? <Button onClick={() => void window.browserApi.announcements.openAction()}>{announcementStatus.announcement.action.label}</Button>
-                : undefined}
+              title={updateStatus.stage === 'ready' ? '新版本已下载完成' : `发现新版本 ${updateStatus.latestVersion}`}
+              description={updateStatus.message}
+              action={<Button onClick={() => setUpdateModalOpen(true)}>查看详情</Button>}
             />
           )}
 
