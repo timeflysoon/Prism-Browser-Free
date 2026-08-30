@@ -375,11 +375,6 @@ export interface BrowserApi {
     openInstaller: () => Promise<void>
     onChanged: (listener: (status: AppUpdateStatus) => void) => () => void
   }
-  announcements: {
-    status: () => Promise<AnnouncementStatus>
-    check: () => Promise<AnnouncementStatus>
-    openAction: () => Promise<void>
-  }
   proxy: {
     test: (config: ProxyConfig, profileId?: string) => Promise<ProxyTestResult>
   }
