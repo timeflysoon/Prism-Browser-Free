@@ -89,13 +89,32 @@ export class UpdateManager {
     return { ...this.current }
   }
 
-this.current = {
-  stage: 'disabled',
-  currentVersion,
-  channel: null,
-  distributionMode: null,
-  message: '当前构建未配置更新通道'
-}
+  async initialize(): Promise<AppUpdateStatus> {
+    try {
+      const config = await this.readConfig()
+      this.setStatus({
+        stage: 'current',
+        currentVersion: this.currentVersion,
+        channel: config.channel,
+        distributionMode: config.distributionMode,
+        message: config.distributionMode === 'internal-unsigned'
+          ? '已连接内部未签名测试通道'
+          : `已连接${config.channel === 'stable' ? '稳定' : '测试'}更新通道`
+      })
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        this.logger?.error('应用更新配置无效', error)
+        this.setStatus({
+          stage: 'error',
+          currentVersion: this.currentVersion,
+          channel: null,
+          distributionMode: null,
+          message: error instanceof Error ? error.message : String(error)
+        })
+      }
+    }
+    return this.status()
+  }
 
   async check(): Promise<AppUpdateStatus> {
     const config = await this.readConfig()
