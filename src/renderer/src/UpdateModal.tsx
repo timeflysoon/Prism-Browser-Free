@@ -27,8 +27,14 @@ export function UpdateModal({
     setBusy(true)
     try {
       onUpdateChanged(await window.browserApi.updates.check())
-    } catch (error) {
-      messageApi.error(errorText(error))
+    } catch {
+      onUpdateChanged({
+        stage: 'error',
+        currentVersion: appStatus?.currentVersion ?? '',
+        channel: appStatus?.channel ?? null,
+        distributionMode: appStatus?.distributionMode ?? null,
+        message: '暂时无法连接更新服务器，请到官网手动自行下载新版本！'
+      })
     } finally {
       setBusy(false)
     }
