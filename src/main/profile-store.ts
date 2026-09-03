@@ -276,24 +276,38 @@ export class ProfileStore {
     if (serialNumbers && serialNumbers.length !== inputs.length) throw new Error('环境编号参数无效')
     const drafts = inputs.map(validateProfileDraft)
     const usedSerials = new Set(this.list().map((profile) => profile.serialNumber))
+    // Pass 1: honor each item's originally-requested number where it's still free.
+    const serials: number[] = new Array(drafts.length)
+    const pendingIndexes: number[] = []
+    drafts.forEach((_, index) => {
+      const requested = serialNumbers?.[index]
+      if (validProfileSerial(requested) && !usedSerials.has(requested)) {
+        serials[index] = requested
+        usedSerials.add(requested)
+      } else {
+        pendingIndexes.push(index)
+      }
+    })
+    // Pass 2: items that couldn't keep their requested number (no request, or it collided with a
+    // number already in use) get a freshly allocated one. Allocate in ascending order of each
+    // item's *originally requested* number (items with no request keep their relative input
+    // order, since Array#sort is stable) — not in raw array-index order. Otherwise, when the
+    // batch being created is itself ordered newest-numbered-first (as an exported workspace
+    // archive is), the first item processed would always be the one with the *highest* original
+    // number, and it would grab the *lowest* available fallback number — silently reversing the
+    // whole batch's relative order once the list re-sorts by the new numbers.
+    pendingIndexes.sort((a, b) => (serialNumbers?.[a] ?? -1) - (serialNumbers?.[b] ?? -1))
     // Always start from the current highest serial number among existing (non-deleted) profiles,
     // never from a persisted high-water mark — so a freed number (from a deleted profile) is
     // reused by the next auto-created one instead of being skipped forever.
     let nextSerial = usedSerials.size ? Math.max(...usedSerials) + 1 : 1
-    const serials = drafts.map((_, index) => {
-      const requested = serialNumbers?.[index]
-      let serialNumber: number
-      if (validProfileSerial(requested) && !usedSerials.has(requested)) {
-        serialNumber = requested
-      } else {
-        while (usedSerials.has(nextSerial)) nextSerial += 1
-        if (nextSerial > MAX_PROFILE_SERIAL) throw new Error('环境编号空间已用尽')
-        serialNumber = nextSerial
-      }
-      usedSerials.add(serialNumber)
-      if (serialNumber >= nextSerial) nextSerial = serialNumber + 1
-      return serialNumber
-    })
+    for (const index of pendingIndexes) {
+      while (usedSerials.has(nextSerial)) nextSerial += 1
+      if (nextSerial > MAX_PROFILE_SERIAL) throw new Error('环境编号空间已用尽')
+      serials[index] = nextSerial
+      usedSerials.add(nextSerial)
+      nextSerial += 1
+    }
     this.nextSerialNumber = nextSerial
     const now = new Date().toISOString()
     const created = drafts.map((draft, index) => {
