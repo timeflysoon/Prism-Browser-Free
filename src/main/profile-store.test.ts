@@ -87,7 +87,7 @@ describe('ProfileStore', () => {
     expect(repository.list()).toHaveLength(2)
   })
 
-  it('never reuses a permanent environment number after deletion and restart', async () => {
+  it('reuses a freed environment number after deletion and restart', async () => {
     const repository = await store()
     const first = await repository.create(defaultProfileDraft())
     await repository.remove(first.id)
@@ -97,7 +97,7 @@ describe('ProfileStore', () => {
     const second = await reopened.create(defaultProfileDraft())
 
     expect(first.serialNumber).toBe(1)
-    expect(second.serialNumber).toBe(2)
+    expect(second.serialNumber).toBe(1)
   })
 
   it('updates group and appends deduplicated tags for a selected batch', async () => {

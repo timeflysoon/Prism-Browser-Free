@@ -10,6 +10,7 @@ import { validateProfileDraft } from '../shared/validation'
 import type { Logger } from './app-logger'
 import type { ExtensionStore } from './extension-store'
 import type { ProfileStore } from './profile-store'
+import { validProfileSerial } from './profile-store'
 
 const MAGIC = Buffer.concat([Buffer.from('PRISM-MIGRATION'), Buffer.from([1])])
 const AUTH_TAG_BYTES = 16
@@ -36,7 +37,10 @@ interface ArchiveHeader {
   keyCheck: string
 }
 
-interface MigrationProfile { sourceId: string; favorite: boolean; profile: ProfileDraft }
+// serialNumber is the permanent, user-facing environment number (bound to the profile's
+// fingerprint/seed). It's carried through export/import so re-importing a workspace archive
+// restores each environment to its original number and, therefore, its original list position.
+interface MigrationProfile { sourceId: string; favorite: boolean; serialNumber?: number; profile: ProfileDraft }
 interface MigrationExtension extends Omit<BrowserExtension, 'path'> { sourceId: string }
 interface ArchiveManifest { schemaVersion: 1; archiveId: string; profiles: MigrationProfile[]; extensions: MigrationExtension[] }
 interface RecordMetadata {
@@ -80,6 +84,7 @@ function portableProfile(profile: BrowserProfile): MigrationProfile {
   return {
     sourceId: profile.id,
     favorite: profile.favorite,
+    serialNumber: profile.serialNumber,
     profile: {
       name: profile.name, note: profile.note, group: profile.group, tags: [...profile.tags],
       extensionIds: [...profile.extensionIds], color: profile.color, startUrls: [...profile.startUrls],
@@ -201,7 +206,14 @@ function validateManifest(value: unknown): ArchiveManifest {
   const profiles = manifest.profiles.map((item) => {
     if (!item || typeof item.sourceId !== 'string' || !/^[a-f\d-]{36}$/i.test(item.sourceId) || ids.has(item.sourceId)) throw new Error('迁移包包含无效或重复的环境 ID')
     ids.add(item.sourceId)
-    return { sourceId: item.sourceId, favorite: item.favorite === true, profile: validateProfileDraft(item.profile) }
+    return {
+      sourceId: item.sourceId,
+      favorite: item.favorite === true,
+      // Older archives (exported before this field existed) simply omit it — those profiles
+      // fall back to freshly auto-assigned numbers on import, same as before.
+      serialNumber: validProfileSerial(item.serialNumber) ? item.serialNumber : undefined,
+      profile: validateProfileDraft(item.profile)
+    }
   })
   const extensionIds = new Set<string>()
   const extensions = manifest.extensions.map((item) => {
@@ -415,7 +427,10 @@ export class WorkspaceMigrationManager {
       const drafts = selected.map((item) => validateProfileDraft({ ...item.profile, extensionIds: item.profile.extensionIds.map((id) => {
         const mapped = extensionMap.get(id); if (!mapped) throw new Error('迁移扩展映射不完整'); return mapped
       }) }))
-      if (drafts.length) createdProfiles.push(...await this.profiles.createMany(drafts))
+      // Reuse each environment's original serial number when it isn't already taken in this
+      // vault, so numbering (and therefore list order, which is sorted by serial number) matches
+      // what was exported. Numbers that collide fall back to a freshly auto-assigned one.
+      if (drafts.length) createdProfiles.push(...await this.profiles.createMany(drafts, selected.map((item) => item.serialNumber)))
       for (let index = 0; index < createdProfiles.length; index++) {
         const profile = createdProfiles[index]
         const stagedData = join(staging, 'profiles', selected[index].sourceId, 'user-data')

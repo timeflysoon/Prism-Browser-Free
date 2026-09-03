@@ -64,7 +64,8 @@ export interface FingerprintConfig {
 
 export interface BrowserProfile {
   id: string
-  /** Permanent, user-facing environment number. Never reused after deletion. */
+  /** User-facing environment number. Auto-assigned as (highest existing number + 1); a number
+   *  freed by deleting a profile is reused by the next auto-created one. */
   serialNumber: number
   name: string
   note: string

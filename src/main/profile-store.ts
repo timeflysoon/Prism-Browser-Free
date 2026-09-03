@@ -34,7 +34,7 @@ interface ProfileOwnerMarker {
 const PROFILE_OWNER_FILE = 'profile-owner.json'
 const MAX_PROFILE_SERIAL = 999_999_999
 
-function validProfileSerial(value: unknown): value is number {
+export function validProfileSerial(value: unknown): value is number {
   return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= MAX_PROFILE_SERIAL
 }
 
@@ -248,7 +248,10 @@ export class ProfileStore {
   }
 
   list(): BrowserProfile[] {
-    return [...this.profiles.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    // Ordered by the permanent, user-facing serial number (newest-numbered first) so that
+    // editing a profile ("保存修改") never changes its position — position must stay tied to
+    // the serial number, not to updatedAt.
+    return [...this.profiles.values()].sort((a, b) => b.serialNumber - a.serialNumber)
   }
 
   get(id: string): BrowserProfile {
@@ -261,20 +264,44 @@ export class ProfileStore {
     return (await this.createMany([input]))[0]
   }
 
-  async createMany(inputs: ProfileDraft[]): Promise<BrowserProfile[]> {
+  /**
+   * @param serialNumbers Optional, parallel to `inputs`. When an entry is a valid serial number
+   * that isn't currently in use, it is reused as-is (e.g. re-importing a workspace migration
+   * archive so environment numbers stay bound to their original fingerprint/seed). Entries that
+   * are omitted, invalid, or already taken fall back to the next free auto-assigned number.
+   */
+  async createMany(inputs: ProfileDraft[], serialNumbers?: Array<number | undefined>): Promise<BrowserProfile[]> {
     if (!Array.isArray(inputs) || inputs.length === 0) throw new Error('没有可创建的浏览器环境')
     if (inputs.length > 500) throw new Error('单次最多创建 500 个浏览器环境')
+    if (serialNumbers && serialNumbers.length !== inputs.length) throw new Error('环境编号参数无效')
     const drafts = inputs.map(validateProfileDraft)
-    if (this.nextSerialNumber + drafts.length - 1 > MAX_PROFILE_SERIAL) throw new Error('环境编号空间已用尽')
-    const firstSerialNumber = this.nextSerialNumber
-    this.nextSerialNumber += drafts.length
+    const usedSerials = new Set(this.list().map((profile) => profile.serialNumber))
+    // Always start from the current highest serial number among existing (non-deleted) profiles,
+    // never from a persisted high-water mark — so a freed number (from a deleted profile) is
+    // reused by the next auto-created one instead of being skipped forever.
+    let nextSerial = usedSerials.size ? Math.max(...usedSerials) + 1 : 1
+    const serials = drafts.map((_, index) => {
+      const requested = serialNumbers?.[index]
+      let serialNumber: number
+      if (validProfileSerial(requested) && !usedSerials.has(requested)) {
+        serialNumber = requested
+      } else {
+        while (usedSerials.has(nextSerial)) nextSerial += 1
+        if (nextSerial > MAX_PROFILE_SERIAL) throw new Error('环境编号空间已用尽')
+        serialNumber = nextSerial
+      }
+      usedSerials.add(serialNumber)
+      if (serialNumber >= nextSerial) nextSerial = serialNumber + 1
+      return serialNumber
+    })
+    this.nextSerialNumber = nextSerial
     const now = new Date().toISOString()
     const created = drafts.map((draft, index) => {
       const id = randomUUID()
       return {
         ...draft,
         id,
-        serialNumber: firstSerialNumber + index,
+        serialNumber: serials[index],
         proxy: privateProxyConfig(draft.proxy),
         fingerprint: {
           ...draft.fingerprint,

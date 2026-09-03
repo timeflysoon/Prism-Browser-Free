@@ -118,7 +118,10 @@ export default function App() {
   const [importing, setImporting] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState('__all__')
   const [selectedStatus, setSelectedStatus] = useState('__all__')
-  const [sortMode, setSortMode] = useState<'updated' | 'recent' | 'name' | 'created'>('updated')
+  // Default to "最近创建" (createdAt, which never changes once a profile is created) instead of
+  // "最近修改" (updatedAt, which changes on every "保存修改") — otherwise editing a profile moves
+  // it in the list even though the user didn't ask for a "most recently changed" ordering.
+  const [sortMode, setSortMode] = useState<'updated' | 'recent' | 'name' | 'created'>('created')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [batchBusy, setBatchBusy] = useState(false)
