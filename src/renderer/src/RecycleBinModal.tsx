@@ -123,7 +123,7 @@ export function RecycleBinModal({ open, onClose, onRestored }: RecycleBinModalPr
               size="small"
               value={retention}
               onChange={requestRetention}
-              style={{ width: 94 }}
+              style={{ width: 98 }}
               options={[
                 { value: 0, label: '永不' },
                 { value: 7, label: '保留 7 天' },
