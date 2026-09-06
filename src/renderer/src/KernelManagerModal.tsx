@@ -104,6 +104,7 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
       messageApi.error(errorText(error))
     }
   }
+  
   function confirmRollback(): void {
     Modal.confirm({
       title: '回滚到上一个健康内核？',
@@ -163,6 +164,7 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
         ]
       : [])
   ]
+  
   return (
     <Modal open={open} title="浏览器内核" width={760} footer={null} onCancel={onClose} destroyOnHidden>
       {contextHolder}
