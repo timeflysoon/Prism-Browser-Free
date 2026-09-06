@@ -1,5 +1,6 @@
-import { CheckCircleFilled, DeleteOutlined, FolderOpenOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
-import { Alert, Button, List, Modal, Popconfirm, Space, Spin, Tag, Typography, message } from 'antd'
+import { CheckCircleFilled, DeleteOutlined, DownOutlined, FolderOpenOutlined, ReloadOutlined, RollbackOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { Alert, Button, Dropdown, List, Modal, Popconfirm, Space, Spin, Tag, Typography, message } from 'antd'
+import type { MenuProps } from 'antd'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { EngineStatus, KernelHealth, KernelRelease } from '../../shared/types'
 
