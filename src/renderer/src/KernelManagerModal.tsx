@@ -160,7 +160,7 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
     ...(rollbackAvailable
       ? [
           { type: 'divider' as const },
-          { key: 'rollback', icon: <RollbackOutlined />, label: '回滚上一个', danger: true, onClick: () => confirmRollback() }
+          { key: 'rollback', icon: <RollbackOutlined />, label: '回滚内核', danger: true, onClick: () => confirmRollback() }
         ]
       : [])
   ]
