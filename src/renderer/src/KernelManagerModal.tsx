@@ -183,16 +183,11 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
           <Button type="primary" icon={<FolderOpenOutlined />} onClick={() => void importLocal()}>导入本地构建</Button>
           <Button onClick={() => void selectManual()}>外部路径</Button>
           <Button onClick={() => void useSystem()}>系统兼容模式</Button>
-          {rollbackAvailable && (
-            <Popconfirm
-              title="回滚到上一个健康内核？"
-              description="请先关闭全部浏览器环境。"
-              onConfirm={() => rollback()}
-            >
-              <Button danger>回滚上一个</Button>
-            </Popconfirm>
-          )}
-          <Button icon={<ReloadOutlined />} loading={loading} onClick={() => void refresh()}>刷新</Button>
+          <Dropdown menu={{ items: kernelMenuItems }} trigger={['click', 'hover']} disabled={loading}>
+            <Button icon={<ReloadOutlined />}>
+              刷新 <DownOutlined />
+            </Button>
+          </Dropdown>
         </Space>
       </div>
 
