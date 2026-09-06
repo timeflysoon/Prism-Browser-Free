@@ -154,6 +154,15 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
     }
   }
 
+  const kernelMenuItems: MenuProps['items'] = [
+    { key: 'refresh', icon: <ReloadOutlined />, label: '刷新列表', onClick: () => void refresh() },
+    ...(rollbackAvailable
+      ? [
+          { type: 'divider' as const },
+          { key: 'rollback', icon: <RollbackOutlined />, label: '回滚上一个', danger: true, onClick: () => confirmRollback() }
+        ]
+      : [])
+  ]
   return (
     <Modal open={open} title="浏览器内核" width={760} footer={null} onCancel={onClose} destroyOnHidden>
       {contextHolder}
