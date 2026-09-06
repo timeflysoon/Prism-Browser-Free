@@ -185,7 +185,7 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
           <Button type="primary" icon={<FolderOpenOutlined />} onClick={() => void importLocal()}>导入本地构建</Button>
           <Button onClick={() => void selectManual()}>外部路径</Button>
           <Button onClick={() => void useSystem()}>系统兼容模式</Button>
-          <Dropdown menu={{ items: kernelMenuItems }} trigger={['click', 'hover']} disabled={loading} placement="bottom">
+          <Dropdown menu={{ items: kernelMenuItems }} trigger={['click', 'hover']} disabled={loading} placement="bottomRight">
             <Button icon={<ReloadOutlined />}>
               刷新 <DownOutlined />
             </Button>
