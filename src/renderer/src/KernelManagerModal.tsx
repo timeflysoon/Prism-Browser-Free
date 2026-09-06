@@ -104,6 +104,16 @@ export function KernelManagerModal({ open, engine, onClose, onEngineChanged }: K
       messageApi.error(errorText(error))
     }
   }
+  function confirmRollback(): void {
+    Modal.confirm({
+      title: '回滚到上一个健康内核？',
+      content: '请先关闭全部浏览器环境。',
+      okText: '回滚',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: () => rollback()
+    })
+  }
 
   async function importLocal(): Promise<void> {
     try {
