@@ -7,7 +7,7 @@ import { pipeline } from 'node:stream/promises'
 import { Readable, Transform } from 'node:stream'
 import { promisify } from 'node:util'
 import type { EngineStatus, KernelHealth, KernelInstallProgress, KernelRelease } from '../shared/types'
-import { locateBrowser, locateBrowserSelection, normalizeBrowserSelection } from './browser-locator'
+import { locateBrowser, locateBrowserSelection, locateBundledBrowser, normalizeBrowserSelection } from './browser-locator'
 import {
   collectKernelIntegrity,
   kernelPayloadIdentity,
