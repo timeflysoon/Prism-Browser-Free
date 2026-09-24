@@ -95,6 +95,16 @@
     },
     "win": {
       "icon": "build/icon.ico",
+      "extraResources": [
+        {
+          "from": "build/kernel-bundle/current",
+          "to": "kernels/current"
+        },
+        {
+          "from": "build/kernel-bundle/available",
+          "to": "kernels/available"
+        }
+      ],
       "signtoolOptions": {
         "signingHashAlgorithms": [
           "sha256"
