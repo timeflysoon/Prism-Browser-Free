@@ -126,6 +126,30 @@ jobs:
         if: needs.resolve-version.outputs.version != ''
         run: npm pkg set version=${{ needs.resolve-version.outputs.version }}
 
+      - name: 准备内置内核（current=150，available=153）
+        shell: pwsh
+        env:
+          K150_URL: https://github.com/timeflysoon/Prism-Browser-Free/releases/download/kernels-windows-x64-150-20260923/Prism-Kernel-150.0.7871.186-windows-x64.zip
+          K150_SHA256: 6e5ddb3e09cbf14489f919d90bd4a87ddfd79b4a8c707f59d40f4aff46b53841
+          K153_URL: https://github.com/timeflysoon/Prism-Browser-Free/releases/download/kernels-windows-x64-153-20260923/Prism-Kernel-153.0.8010.53-windows-x64.zip
+          K153_SHA256: b5b9a86cbd9487b2ab784c279bb4fabe374e13b8e1555c99ee436160c2016e45
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          function Prepare-Kernel($url, $sha256, $version, $dest) {
+            $zip = Join-Path $env:RUNNER_TEMP "kernel-$version.zip"
+            $extracted = Join-Path $env:RUNNER_TEMP "kernel-$version"
+            Invoke-WebRequest -Uri $url -OutFile $zip
+            $actual = (Get-FileHash $zip -Algorithm SHA256).Hash
+            if ($actual -ne $sha256) { throw "内核 $version SHA-256 不匹配：$actual" }
+            Remove-Item $extracted -Recurse -Force -ErrorAction SilentlyContinue
+            Expand-Archive -LiteralPath $zip -DestinationPath $extracted -Force
+            node tools/kernel-bundle/prepare-kernel.mjs --source $extracted --dest $dest --version $version
+            if ($LASTEXITCODE -ne 0) { throw "准备内核 $version 失败" }
+          }
+          Prepare-Kernel $env:K150_URL $env:K150_SHA256 '150.0.7871.186' 'build/kernel-bundle/current'
+          Prepare-Kernel $env:K153_URL $env:K153_SHA256 '153.0.8010.53' 'build/kernel-bundle/available/153.0.8010.53'
+
       - name: 构建 Windows 安装包
         # 只构建 msi 和 zip 两个目标（与实际发布保持一致，不生成独立的
         # portable .exe 目标）；zip 会在下一步重命名为带 -portable 后缀；
