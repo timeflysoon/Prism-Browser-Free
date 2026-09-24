@@ -230,73 +230,54 @@ export class KernelManager {
       throw new Error('当前只支持导入 macOS 和 Windows 本地内核')
     }
     if (this.installingVersion) throw new Error(`内核 ${this.installingVersion} 正在安装，请稍候`)
-    const executable = await normalizeBrowserSelection(selection)
-    const { version, sourceRoot, executableRelative } = await this.inspectLocalBuild(executable)
-    const destination = this.kernelPath(version)
-    const existing = await this.readManifest(version)
-    if (existing) {
-      const sourceIntegrityRoot = process.platform === 'darwin' ? dirname(sourceRoot) : sourceRoot
-      const sourceExecutableRelative = process.platform === 'darwin'
-        ? join(basename(sourceRoot), 'Contents', 'MacOS', basename(executable))
-        : basename(executable)
-      const [existingIntegrity, sourceIntegrity] = await Promise.all([
-        collectKernelIntegrity(destination, existing.executableRelative),
-        collectKernelIntegrity(sourceIntegrityRoot, sourceExecutableRelative)
-      ])
-      if (existing.source === 'local-build'
-        && kernelPayloadIdentity(existingIntegrity, existing.executableRelative)
-          === kernelPayloadIdentity(sourceIntegrity, sourceExecutableRelative)) {
-        if (!existing.criticalFiles || !existing.criticalFilesSha256) {
-          const upgraded: InstalledKernelManifest = { ...existing, schemaVersion: 2, ...existingIntegrity }
-          await writeFile(join(destination, 'manifest.json'), JSON.stringify(upgraded, null, 2), { mode: 0o600 })
-          this.logger?.info('本地内核完整性清单已升级', { version, files: existingIntegrity.criticalFiles.length })
-        }
-        return this.activate(version)
-      }
-      throw new Error(`内核 ${version} 已存在且内容不同，请先切换并移除旧版本`)
-    }
-    if (await pathExists(destination)) throw new Error(`内核目录 ${version} 已存在但缺少有效清单，请先人工检查`)
+    const executable = resolve(await normalizeBrowserSelection(selection))
+    const info = await stat(executable).catch(() => undefined)
+    if (!info?.isFile() || info.size <= 0) throw new Error('所选浏览器可执行文件无效')
+    // 只读取四段式 Chromium 版本号，不复制任何文件
+    const { version } = await this.inspectLocalBuild(executable)
 
-    const kernelsPath = join(this.vaultPath, 'kernels')
-    await mkdir(kernelsPath, { recursive: true })
-    const root = await mkdtemp(join(kernelsPath, `.import-${version}-`))
-    const stagingPath = join(root, 'staging')
-    await mkdir(stagingPath)
-    try {
-      if (process.platform === 'darwin') {
-        await execFileAsync('ditto', [sourceRoot, join(stagingPath, 'Chromium.app')])
-      } else {
-        await cp(sourceRoot, join(stagingPath, 'browser'), { recursive: true })
+    // 情况 A（Windows）：chrome.exe 位于当前 Prism 的 resources\kernels\available\<版本号>\
+    // 补写 manifest.json 后与“随应用内置”内核同待遇，vault\kernels 下不产生任何目录
+    const versionDir = dirname(executable)
+    const availableRoot = resolve(process.resourcesPath, 'kernels', 'available')
+    const inAvailable = process.platform === 'win32'
+      && resolve(dirname(versionDir)).toLowerCase() === availableRoot.toLowerCase()
+      && basename(versionDir) === version
+    if (inAvailable) {
+      try {
+        const manifestPath = join(versionDir, 'manifest.json')
+        if (!await pathExists(manifestPath)) {
+          const executableRelative = basename(executable)
+          const integrity = await collectKernelIntegrity(versionDir, executableRelative)
+          const manifest = {
+            schemaVersion: 2,
+            version,
+            executableRelative,
+            target: `${process.platform}-${process.arch}`,
+            ...integrity
+          }
+          await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
+          this.logger?.info('已为 available 目录下的内核生成完整性清单', { version, files: integrity.criticalFiles.length })
+        }
+      } catch (error) {
+        this.logger?.error('生成内核清单失败，改为按外部路径原地使用', { version, error: error instanceof Error ? error.message : String(error) })
       }
-      const importedExecutable = join(stagingPath, executableRelative)
-      const info = await stat(importedExecutable)
-      if (!info.isFile() || info.size <= 0) throw new Error('导入后的浏览器可执行文件无效')
-      const integrity = await collectKernelIntegrity(stagingPath, executableRelative)
-      const normalizedExecutableRelative = executableRelative.split(sep).join('/')
-      const executableRecord = integrity.criticalFiles.find((file) => file.path === normalizedExecutableRelative)
-      if (!executableRecord) throw new Error('内核完整性清单缺少浏览器入口')
-      const manifest: InstalledKernelManifest = {
-        schemaVersion: 2,
-        version,
-        assetName: `local-build-${process.platform}-${process.arch}`,
-        sha256: executableRecord.sha256,
-        installedAt: new Date().toISOString(),
-        executableRelative,
-        executableSha256: executableRecord.sha256,
-        executableSize: executableRecord.size,
-        ...integrity,
-        source: 'local-build',
-        target: `${process.platform}-${process.arch}`
+      const bundled = await locateBundledBrowser(process.resourcesPath, version)
+      if (bundled?.executable) {
+        const primary = await locateBundledBrowser()
+        this.logger?.info('本地内核已按内置内核方式启用', { version })
+        return this.configure(
+          primary?.version === version
+            ? { browserExecutable: '', fingerprintKernel: true, enginePreference: 'bundled' }
+            : { browserExecutable: bundled.executable, fingerprintKernel: true, enginePreference: 'auto' },
+          bundled.executable
+        )
       }
-      await writeFile(join(stagingPath, 'manifest.json'), JSON.stringify(manifest, null, 2), { mode: 0o600 })
-      await rename(stagingPath, destination)
-      await this.rememberPreviousKernel(join(destination, executableRelative))
-      await this.settings.update({ browserExecutable: join(destination, executableRelative), fingerprintKernel: true, enginePreference: 'auto' })
-      this.logger?.info('本地构建内核已导入并启用', { version, target: manifest.target })
-      return locateBrowser(this.settings)
-    } finally {
-      await rm(root, { recursive: true, force: true })
     }
+
+    // 情况 B：其他任意位置，原地使用，只记录路径，不复制
+    this.logger?.info('本地构建内核已原地启用（未复制）', { version, executable })
+    return this.configure({ browserExecutable: executable, fingerprintKernel: true, enginePreference: 'auto' }, executable)
   }
 
   cancel(versionInput: string): void {
