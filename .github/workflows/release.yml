@@ -127,19 +127,29 @@ jobs:
         run: npm pkg set version=${{ needs.resolve-version.outputs.version }}
 
       - name: 准备内置内核（current=150，available=153）
+        # 用 GITHUB_TOKEN 从本仓库的 Release 下载内核压缩包（私库也可用），校验 SHA-256，
+        # 复制到 build/kernel-bundle 下并生成 manifest.json；
+        # 打包时 package.json 的 win.extraResources 会把它们放进 resources/kernels
         shell: pwsh
         env:
-          K150_URL: https://github.com/timeflysoon/Prism-Browser-Free/releases/download/kernels-windows-x64-150-20260923/Prism-Kernel-150.0.7871.186-windows-x64.zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          K150_TAG: kernels-windows-x64-150-20260923
+          K150_ASSET: Prism-Kernel-150.0.7871.186-windows-x64.zip
           K150_SHA256: 6e5ddb3e09cbf14489f919d90bd4a87ddfd79b4a8c707f59d40f4aff46b53841
-          K153_URL: https://github.com/timeflysoon/Prism-Browser-Free/releases/download/kernels-windows-x64-153-20260923/Prism-Kernel-153.0.8010.53-windows-x64.zip
+          K153_TAG: kernels-windows-x64-153-20260923
+          K153_ASSET: Prism-Kernel-153.0.8010.53-windows-x64.zip
           K153_SHA256: b5b9a86cbd9487b2ab784c279bb4fabe374e13b8e1555c99ee436160c2016e45
         run: |
           $ErrorActionPreference = 'Stop'
-          $ProgressPreference = 'SilentlyContinue'
-          function Prepare-Kernel($url, $sha256, $version, $dest) {
-            $zip = Join-Path $env:RUNNER_TEMP "kernel-$version.zip"
+          function Prepare-Kernel($tag, $asset, $sha256, $version, $dest) {
+            $dl = Join-Path $env:RUNNER_TEMP "kernel-dl-$version"
             $extracted = Join-Path $env:RUNNER_TEMP "kernel-$version"
-            Invoke-WebRequest -Uri $url -OutFile $zip
+            Remove-Item $dl -Recurse -Force -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force -Path $dl | Out-Null
+            gh release download $tag --repo $env:GH_REPO --pattern $asset --dir $dl
+            if ($LASTEXITCODE -ne 0) { throw "下载内核 $version 失败（tag=$tag，asset=$asset）" }
+            $zip = Join-Path $dl $asset
             $actual = (Get-FileHash $zip -Algorithm SHA256).Hash
             if ($actual -ne $sha256) { throw "内核 $version SHA-256 不匹配：$actual" }
             Remove-Item $extracted -Recurse -Force -ErrorAction SilentlyContinue
@@ -147,8 +157,8 @@ jobs:
             node tools/kernel-bundle/prepare-kernel.mjs --source $extracted --dest $dest --version $version
             if ($LASTEXITCODE -ne 0) { throw "准备内核 $version 失败" }
           }
-          Prepare-Kernel $env:K150_URL $env:K150_SHA256 '150.0.7871.186' 'build/kernel-bundle/current'
-          Prepare-Kernel $env:K153_URL $env:K153_SHA256 '153.0.8010.53' 'build/kernel-bundle/available/153.0.8010.53'
+          Prepare-Kernel $env:K150_TAG $env:K150_ASSET $env:K150_SHA256 '150.0.7871.186' 'build/kernel-bundle/current'
+          Prepare-Kernel $env:K153_TAG $env:K153_ASSET $env:K153_SHA256 '153.0.8010.53' 'build/kernel-bundle/available/153.0.8010.53'
 
       - name: 构建 Windows 安装包
         # 只构建 msi 和 zip 两个目标（与实际发布保持一致，不生成独立的
