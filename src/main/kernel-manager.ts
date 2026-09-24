@@ -10,7 +10,6 @@ import type { EngineStatus, KernelHealth, KernelInstallProgress, KernelRelease }
 import { locateBrowser, locateBrowserSelection, locateBundledBrowser, normalizeBrowserSelection } from './browser-locator'
 import {
   collectKernelIntegrity,
-  kernelPayloadIdentity,
   validateKernelIntegrityFields,
   verifyKernelIntegrity,
   type KernelIntegrityFields
