@@ -743,7 +743,7 @@ export default function App() {
       sorter: profileTableSorters.environment,
       render: (_value, profile) => (
         <div className="profile-name-cell">
-          <span className="profile-square" style={{ background: `color-mix(in srgb, ${profile.color} 60%, transparent)` }}>
+          <span className="profile-square" style={{ background: `color-mix(in srgb, ${profile.color} 70%, transparent)` }}>
             <Button
               type="text"
               size="small"
