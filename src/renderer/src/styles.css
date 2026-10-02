@@ -73,7 +73,8 @@ button, input, textarea { font: inherit; }
 .summary-card.storage-summary .anticon { position: absolute; top: 37px; right: 18px; color: #7c8495; }
 .favorite-button { flex: none; color: #a7adba; }
 .favorite-button.active { color: #ffd93d; }
-.favorite-button svg path { stroke: #fff; stroke-width: 2px; stroke-linejoin: round; paint-order: stroke; vector-effect: non-scaling-stroke; }
+.favorite-button .anticon, .favorite-button svg { overflow: visible; }
+.favorite-button svg path { stroke: #fff; stroke-width: 2px; stroke-linejoin: miter; stroke-miterlimit: 10; paint-order: stroke; vector-effect: non-scaling-stroke; }
 .profiles-panel { overflow: hidden; border: 1px solid #e4e9f2; border-radius: 17px; background: #fff; box-shadow: 0 10px 34px rgba(31, 45, 78, .05); }
 .table-toolbar { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #edf0f4; }
 .table-toolbar h4 { margin: 0 !important; }
