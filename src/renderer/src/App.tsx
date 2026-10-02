@@ -107,7 +107,7 @@ function proxyCheckTag(profile: BrowserProfileView) {
   const stale = Date.now() - Date.parse(check.checkedAt) > 24 * 60 * 60 * 1000
   const country = countryLabel(check)
   const detail = check.ok
-    ? [check.ip, country, check.city, `${check.latencyMs} ms`, new Date(check.checkedAt).toLocaleString()].filter(Boolean).join(' · ')
+    ? [check.ip, check.country, check.city, `${check.latencyMs} ms`, new Date(check.checkedAt).toLocaleString()].filter(Boolean).join(' · ')
     : `${check.error ?? '连接失败'} · ${new Date(check.checkedAt).toLocaleString()}`
   return (
     <Tooltip title={detail}>
