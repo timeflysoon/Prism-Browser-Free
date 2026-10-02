@@ -645,7 +645,7 @@ export class ProfileStore {
   async setFavorite(id: string, favorite: boolean): Promise<BrowserProfile> {
     if (typeof favorite !== 'boolean') throw new Error('收藏状态无效')
     const current = this.get(id)
-    const profile: BrowserProfile = { ...current, favorite, updatedAt: new Date().toISOString() }
+    const profile: BrowserProfile = { ...current, favorite }
     this.profiles.set(id, profile)
     await this.persist()
     return profile

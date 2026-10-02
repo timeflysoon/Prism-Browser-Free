@@ -81,17 +81,38 @@ function statusTag(profile: BrowserProfileView) {
   return <Tooltip title={profile.lastError}><Tag color={item.color}>{item.text}</Tag></Tooltip>
 }
 
+const regionNames = new Intl.DisplayNames(['zh-CN'], { type: 'region' })
+
+function countryLabel(check: { countryCode?: string; country?: string }): string | undefined {
+  if (check.countryCode) {
+    const code = check.countryCode.toUpperCase()
+    try {
+      const name = regionNames.of(code)
+      if (name && name !== code) return name
+    } catch {
+      // 国家代码无效时回退到接口返回的原始国家名
+    }
+  }
+  return check.country
+}
+
+function countBadgeFontSize(count: number): number {
+  const digits = String(count).length
+  return digits <= 2 ? 13 : digits === 3 ? 11 : 9
+}
+
 function proxyCheckTag(profile: BrowserProfileView) {
   const check = profile.proxyCheck
   if (!check) return <Typography.Text type="secondary" className="proxy-check-line">未检测</Typography.Text>
   const stale = Date.now() - Date.parse(check.checkedAt) > 24 * 60 * 60 * 1000
+  const country = countryLabel(check)
   const detail = check.ok
-    ? [check.ip, check.country, check.city, `${check.latencyMs} ms`, new Date(check.checkedAt).toLocaleString()].filter(Boolean).join(' · ')
+    ? [check.ip, country, check.city, `${check.latencyMs} ms`, new Date(check.checkedAt).toLocaleString()].filter(Boolean).join(' · ')
     : `${check.error ?? '连接失败'} · ${new Date(check.checkedAt).toLocaleString()}`
   return (
     <Tooltip title={detail}>
       <Tag color={check.exitChanged ? 'volcano' : check.ok ? stale ? 'warning' : 'success' : 'error'} className="proxy-check-tag">
-        {check.ok ? `${check.ip ?? '可用'} · ${check.latencyMs} ms${check.exitChanged ? ' · 出口变化' : stale ? ' · 已过期' : ''}` : '检测失败'}
+        {check.ok ? `${[check.ip ?? '可用', country, `${check.latencyMs} ms`].filter(Boolean).join(' · ')}${check.exitChanged ? ' · 出口变化' : stale ? ' · 已过期' : ''}` : '检测失败'}
       </Tag>
     </Tooltip>
   )
@@ -241,7 +262,6 @@ export default function App() {
         .some((value) => value.toLowerCase().includes(normalized))
     })
     return [...filtered].sort((first, second) => {
-      if (first.favorite !== second.favorite) return first.favorite ? -1 : 1
       if (sortMode === 'name') return first.name.localeCompare(second.name, 'zh-CN', { numeric: true })
       if (sortMode === 'recent') return (second.lastOpenedAt ?? '').localeCompare(first.lastOpenedAt ?? '') || second.updatedAt.localeCompare(first.updatedAt)
       if (sortMode === 'created') return second.createdAt.localeCompare(first.createdAt)
@@ -292,6 +312,15 @@ export default function App() {
       executable: bundledEngine.executable
     }, ...kernels]
   }, [bundledEngine, kernels])
+
+  const activeKernelVersion = useMemo(() => {
+    const normalize = (path?: string | null): string => (path ?? '').replace(/\\/g, '/').toLowerCase()
+    const current = normalize(engine?.executable)
+    const matched = current
+      ? selectableKernels.find((kernel) => kernel.executable && normalize(kernel.executable) === current)
+      : undefined
+    return matched?.version ?? engine?.version
+  }, [engine, selectableKernels])
 
   async function refreshStorageOverview(): Promise<void> {
     setStorageLoading(true)
@@ -714,17 +743,19 @@ export default function App() {
       sorter: profileTableSorters.environment,
       render: (_value, profile) => (
         <div className="profile-name-cell">
-          <span className="profile-dot" style={{ background: profile.color }} />
-          <Button
-            type="text"
-            size="small"
-            className={`favorite-button${profile.favorite ? ' active' : ''}`}
-            aria-label={profile.favorite ? '取消收藏' : '收藏环境'}
-            icon={profile.favorite ? <StarFilled /> : <StarOutlined />}
-            onClick={() => void toggleFavorite(profile)}
-          />
+          <span className="profile-square" style={{ background: profile.color }}>
+            <Button
+              type="text"
+              size="small"
+              className={`favorite-button${profile.favorite ? ' active' : ''}`}
+              aria-label={profile.favorite ? '取消收藏' : '收藏环境'}
+              icon={profile.favorite ? <StarFilled /> : <StarOutlined />}
+              onClick={() => void toggleFavorite(profile)}
+            />
+          </span>
+          <span className="profile-serial">{String(profile.serialNumber).padStart(2, '0')}</span>
           <div>
-            <Typography.Text strong>#{profile.serialNumber} · {profile.name}</Typography.Text>
+            <Typography.Text strong>{profile.name}</Typography.Text>
           </div>
         </div>
       )
@@ -905,9 +936,9 @@ export default function App() {
         <Content className="content">
           <header className="page-header">
             <div>
-              <span className="page-kicker">本机工作区</span>
-              <Typography.Title level={2}>环境工作台</Typography.Title>
-              <Typography.Text type="secondary">创建、运行并管理彼此隔离的浏览器身份</Typography.Text>
+              <span className="page-kicker">WORKSPACE / 本机</span>
+              <Typography.Title level={2}>浏览器环境</Typography.Title>
+              <Typography.Text type="secondary">每个身份独立运行，每项工作井然有序</Typography.Text>
             </div>
             <Space>
               {runningCount > 0 && (
@@ -1007,7 +1038,7 @@ export default function App() {
             <div className="summary-card"><span>正在运行</span><strong className="running-number">{runningCount}</strong></div>
             <div className="summary-card engine-summary">
               <span>浏览器内核</span>
-              <strong>{engine?.label ?? '检查中'}</strong>
+              <strong>{engine?.fingerprintKernel && activeKernelVersion ? `Chromium ${activeKernelVersion}` : engine?.label ?? '检查中'}</strong>
               {engine?.fingerprintKernel && <CheckCircleFilled />}
             </div>
             <Tooltip title={storage ? `环境 ${formatBytes(storage.profilesBytes)} · 缓存 ${formatBytes(storage.cacheBytes)} · 回收站 ${formatBytes(storage.recycleBytes)} · 内核 ${formatBytes(storage.kernelsBytes)} · 扩展 ${formatBytes(storage.extensionsBytes)}` : '正在统计本地数据'}>
@@ -1023,8 +1054,11 @@ export default function App() {
             <div className="table-toolbar">
               <div className="table-title-actions">
                 <Typography.Title level={4}>全部环境</Typography.Title>
+                {profiles.length > 0 && (
+                  <span className="env-count-badge" style={{ fontSize: countBadgeFontSize(profiles.length) }}>{profiles.length}</span>
+                )}
                 {selectedIds.length > 0 && (
-                  <Space>
+                  <Space className="batch-actions">
                     <Typography.Text type="secondary">已选 {selectedIds.length} 项</Typography.Text>
                     <Button
                       size="small"
@@ -1043,6 +1077,7 @@ export default function App() {
                   </Space>
                 )}
               </div>
+              <div className="table-toolbar-filters">
               <Space>
                 <Button type={favoritesOnly ? 'primary' : 'default'} icon={favoritesOnly ? <StarFilled /> : <StarOutlined />} onClick={() => setFavoritesOnly((value) => !value)}>收藏</Button>
                 <Select
@@ -1073,15 +1108,16 @@ export default function App() {
                     { value: 'created', label: '最近创建' }
                   ]}
                 />
-                <Input
-                  allowClear
-                  prefix={<SearchOutlined />}
-                  placeholder="搜索名称、分组、标签、代理或时区"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  className="search-input"
-                />
               </Space>
+              <Input
+                allowClear
+                prefix={<SearchOutlined />}
+                placeholder="搜索名称、分组、标签、代理或时区"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="search-input"
+              />
+              </div>
             </div>
             <Spin spinning={loading}>
               <Table

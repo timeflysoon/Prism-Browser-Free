@@ -71,12 +71,19 @@ button, input, textarea { font: inherit; }
 .summary-card.engine-summary .anticon { position: absolute; top: 35px; right: 20px; color: #23ad79; }
 .summary-card.storage-summary { position: relative; width: 100%; color: inherit; text-align: left; cursor: pointer; }
 .summary-card.storage-summary .anticon { position: absolute; top: 37px; right: 18px; color: #7c8495; }
-.favorite-button { flex: none; margin-left: -5px; color: #a7adba; }
-.favorite-button.active { color: #e5a100; }
+.favorite-button { flex: none; color: #a7adba; }
+.favorite-button.active { color: #ffd93d; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .4)); }
 .profiles-panel { overflow: hidden; border: 1px solid #e4e9f2; border-radius: 17px; background: #fff; box-shadow: 0 10px 34px rgba(31, 45, 78, .05); }
-.table-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 18px 20px; border-bottom: 1px solid #edf0f4; }
+.table-toolbar { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #edf0f4; }
 .table-toolbar h4 { margin: 0 !important; }
-.table-title-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; min-width: 0; }
+.table-title-actions { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; min-height: 28px; }
+.table-title-actions .batch-actions { margin-left: auto; }
+.table-toolbar-filters { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 16px; }
+.env-count-badge {
+  display: inline-flex; flex: none; align-items: center; justify-content: center;
+  height: 20px; min-width: 20px; padding: 0 5px; border-radius: 6px;
+  color: #5965e8; background: #f0f1ff; font-weight: 600; line-height: 1;
+}
 .group-filter { width: 155px; }
 .status-filter, .sort-filter { width: 120px; }
 .search-input { width: 310px; }
@@ -85,8 +92,13 @@ button, input, textarea { font: inherit; }
 .profiles-panel .ant-table-wrapper .ant-table { border-radius: 0; }
 .profiles-panel .ant-table-thead > tr > th { border-bottom: 1px solid #edf0f4; font-size: 12px; font-weight: 600; }
 .profiles-panel .ant-table-tbody > tr > td { padding-top: 17px; padding-bottom: 17px; }
-.profile-name-cell { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.profile-dot { flex: none; width: 9px; height: 34px; border-radius: 8px; }
+.profile-name-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.profile-square {
+  flex: none; display: grid; place-items: center;
+  width: var(--ant-control-height, 32px); height: var(--ant-control-height, 32px);
+  border-radius: var(--ant-border-radius, 6px);
+}
+.profile-serial { flex: none; color: #8b93a3; font-variant-numeric: tabular-nums; }
 .profile-name-cell > div { min-width: 0; }
 .profile-name-cell strong, .profile-subtitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-subtitle { max-width: 190px; margin-top: 3px; font-size: 11px; }
