@@ -4,7 +4,9 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { defaultProfileDraft } from '../shared/defaults'
 import { buildLaunchArgs } from './launch-args'
-import { hintsFromLaunchArgs, RECOVERED_TAG } from './profile-recovery'
+import { defaultFingerprint } from '../shared/defaults'
+import { effectiveFingerprintSeed } from '../shared/hardware-profiles'
+import { hintsFromLaunchArgs, rebuildProfile, RECOVERED_TAG } from './profile-recovery'
 import { ProfileStore } from './profile-store'
 import { SettingsStore } from './settings-store'
 
@@ -212,5 +214,17 @@ describe('hintsFromLaunchArgs', () => {
     expect(hints.fingerprint).toEqual({})
     expect(hints.name).toBeUndefined()
     expect(hints.startUrls).toEqual([])
+  })
+})
+
+describe('rebuildProfile seed identity', () => {
+  it('keeps the effective fingerprint seed stable for seeded GPU profiles', () => {
+    for (let index = 1; index <= 300; index += 1) {
+      const original = defaultFingerprint(index * 7919)
+      const effective = effectiveFingerprintSeed(original)
+      const hints = hintsFromLaunchArgs([`--fingerprint=${effective}`])
+      const rebuilt = rebuildProfile({ id: `profile-${index}`, hints }, 1)
+      expect(effectiveFingerprintSeed(rebuilt.fingerprint)).toBe(effective)
+    }
   })
 })

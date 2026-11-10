@@ -2,6 +2,7 @@ import { lstat, readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { BrowserPlatform, BrowserProfile, FingerprintConfig, ProfileDraft, WebRtcPolicy } from '../shared/types'
 import { PROFILE_COLORS, defaultFingerprint, defaultProfileWindow, seedFromId } from '../shared/defaults'
+import { hardwareProfile } from '../shared/hardware-profiles'
 import { validateProfileDraft } from '../shared/validation'
 
 const PROFILE_ID_PATTERN = /^[a-zA-Z0-9-]{1,100}$/
@@ -154,6 +155,15 @@ export function rebuildProfile(
     seed: baseSeed,
     // 代理丢失后保留原有时区和语言，避免环境身份发生变化；重新设置代理后可改回“跟随代理”
     networkIdentityMode: 'manual'
+  }
+  // 启动参数里的 --fingerprint 是 effectiveFingerprintSeed() 调整后的值（seed % gpuBucketCount === gpuBucket）。
+  // 重建时必须还原 gpuBucket，否则再次调整会让种子偏移最多 gpuBucketCount-1，环境指纹随之改变。
+  if (hints?.seed !== undefined) {
+    const hardware = hardwareProfile(fingerprint.hardwareProfileId)
+    if (hardware?.gpuBucketCount && hardware.renderIdentityMode === 'seeded-curated') {
+      fingerprint.gpuBucket = baseSeed % hardware.gpuBucketCount
+      fingerprint.renderIdentityVersion = 4
+    }
   }
   const name = (hints?.name ?? `恢复的环境 ${id.slice(0, 8)}`).slice(0, 60)
   const fallback: ProfileDraft = {
