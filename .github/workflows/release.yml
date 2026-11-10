@@ -46,7 +46,7 @@ jobs:
   # ------------------------------
   build-macos:
     needs: resolve-version
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
