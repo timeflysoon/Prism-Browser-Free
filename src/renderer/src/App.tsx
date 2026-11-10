@@ -1006,8 +1006,8 @@ export default function App() {
               className="engine-alert"
               type="warning"
               showIcon
-              title="环境配置已从备份自动恢复"
-              description="环境数据已恢复，可以继续使用。"
+              title="环境配置已自动恢复"
+              description={profileStorageHealth.recoveryMessage ?? '环境数据已恢复，可以继续使用。'}
             />
           )}
 

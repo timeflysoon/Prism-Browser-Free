@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -318,16 +318,66 @@ describe('ProfileStore', () => {
     expect(JSON.parse(await readFile(recovered.previousBackupPath, 'utf8')).schemaVersion).toBe(11)
   })
 
-  it('refuses to replace data when the primary and both backups are invalid', async () => {
+  it('starts instead of failing when the primary file, backups and snapshots are all invalid', async () => {
     const repository = await store()
     await repository.create(defaultProfileDraft())
     await writeFile(repository.profilesPath, '{bad primary', 'utf8')
     await writeFile(repository.backupPath, '{bad backup', 'utf8')
     await writeFile(repository.previousBackupPath, '{bad previous', 'utf8')
+    for (const name of await readdir(repository.snapshotsPath)) {
+      await writeFile(join(repository.snapshotsPath, name), '{bad snapshot', 'utf8')
+    }
 
-    const failed = new ProfileStore(repository.vaultPath)
-    await expect(failed.initialize()).rejects.toThrow('元数据及备份均无法读取')
-    await expect(readFile(repository.profilesPath, 'utf8')).resolves.toBe('{bad primary')
+    const reopened = new ProfileStore(repository.vaultPath)
+    await reopened.initialize()
+
+    const health = reopened.storageHealth()
+    expect(health.recoveredFromBackup).toBe(true)
+    expect(health.issues?.length).toBeGreaterThan(0)
+    // 损坏的主文件被原样保留，而不是被覆盖
+    await expect(readFile(health.corruptFilePath!, 'utf8')).resolves.toBe('{bad primary')
+    await expect(readFile(join(repository.vaultPath, (await readdir(repository.vaultPath)).find((n) => n.endsWith('.backup.json'))!), 'utf8')).resolves.toBe('{bad backup')
+    // 磁盘上的环境目录被重建回来
+    expect(reopened.list()).toHaveLength(1)
+  })
+
+  it('recovers from a historical snapshot when the primary file and both backups are zero-filled', async () => {
+    const repository = await store()
+    // 把初始化时生成的快照回拨到很久以前，使下一次保存会生成包含新环境的快照
+    const [initialSnapshot] = await readdir(repository.snapshotsPath)
+    await rename(join(repository.snapshotsPath, initialSnapshot), join(repository.snapshotsPath, 'profiles-2020-01-01T00-00-00-000Z.json'))
+    const profile = await repository.create(defaultProfileDraft())
+    // 模拟断电后 NTFS 留下的 NUL 空洞文件
+    const nulls = '\0'.repeat(4096)
+    await writeFile(repository.profilesPath, nulls, 'utf8')
+    await writeFile(repository.backupPath, nulls, 'utf8')
+    await writeFile(repository.previousBackupPath, nulls, 'utf8')
+
+    const recovered = new ProfileStore(repository.vaultPath)
+    await recovered.initialize()
+
+    expect(recovered.get(profile.id).id).toBe(profile.id)
+    expect(recovered.storageHealth().recoveryMessage).toContain('历史快照')
+    expect(recovered.storageHealth().corruptFilePath).toContain('profiles.corrupt-')
+  })
+
+  it('does not overwrite the previous backup with a corrupted latest backup', async () => {
+    const repository = await store()
+    await repository.create(defaultProfileDraft())
+    const goodPrevious = await readFile(repository.previousBackupPath, 'utf8')
+    await writeFile(repository.backupPath, '{broken backup', 'utf8')
+
+    await repository.create(defaultProfileDraft())
+
+    await expect(readFile(repository.previousBackupPath, 'utf8')).resolves.toBe(goodPrevious)
+    expect(JSON.parse(await readFile(repository.backupPath, 'utf8')).profiles).toHaveLength(2)
+  })
+
+  it('keeps snapshots at least 30 minutes apart', async () => {
+    const repository = await store()
+    await repository.create(defaultProfileDraft())
+    await repository.create(defaultProfileDraft())
+    expect(await readdir(repository.snapshotsPath)).toHaveLength(1)
   })
 
   it('persists the latest proxy check and clears it when proxy credentials change', async () => {

@@ -8,6 +8,8 @@ import { validateProfileDraft } from '../shared/validation'
 import { identitySecretCodec, type SecretCodec } from './secret-codec'
 import { privateProxyConfig, sameProxyIdentity } from './profile-secrets'
 import { safePathSize } from './profile-data'
+import { writeFileAtomicDurable } from './durable-file'
+import { rebuildProfile, scanOrphanProfileDirectories, usableSerial } from './profile-recovery'
 
 interface StoreFile {
   schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
@@ -33,6 +35,12 @@ interface ProfileOwnerMarker {
 
 const PROFILE_OWNER_FILE = 'profile-owner.json'
 const MAX_PROFILE_SERIAL = 999_999_999
+const SNAPSHOT_DIRECTORY = 'profiles.snapshots'
+const SNAPSHOT_PREFIX = 'profiles-'
+const SNAPSHOT_SUFFIX = '.json'
+// 历史快照：相邻快照至少间隔 30 分钟，最多保留 48 份（约 24 小时的时间分散）。
+const SNAPSHOT_MIN_INTERVAL_MS = 30 * 60 * 1000
+const SNAPSHOT_KEEP = 48
 
 export function validProfileSerial(value: unknown): value is number {
   return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= MAX_PROFILE_SERIAL
@@ -90,6 +98,7 @@ export class ProfileStore {
   readonly profilesPath: string
   readonly backupPath: string
   readonly previousBackupPath: string
+  readonly snapshotsPath: string
   private profiles = new Map<string, BrowserProfile>()
   private nextSerialNumber = 1
   private writeQueue: Promise<void> = Promise.resolve()
@@ -101,6 +110,7 @@ export class ProfileStore {
     this.profilesPath = join(vaultPath, 'profiles.json')
     this.backupPath = join(vaultPath, 'profiles.json.backup')
     this.previousBackupPath = join(vaultPath, 'profiles.json.backup.previous')
+    this.snapshotsPath = join(vaultPath, SNAPSHOT_DIRECTORY)
   }
 
   async initialize(): Promise<void> {
@@ -112,35 +122,63 @@ export class ProfileStore {
     } catch (error) {
       primaryError = error
     }
+    const describe = (error: unknown): string => error instanceof Error ? error.message : String(error)
+    const primaryMissing = (primaryError as NodeJS.ErrnoException | undefined)?.code === 'ENOENT'
+    const issues: string[] = []
 
     if (!loaded) {
-      const recoveryErrors: unknown[] = []
+      const candidates: Array<{ path: string; label: string }> = [
+        { path: this.backupPath, label: '最近备份' },
+        { path: this.previousBackupPath, label: '上一份备份' },
+        ...(await this.listSnapshots()).map((snapshot) => ({ path: snapshot.path, label: `历史快照（${snapshot.name}）` }))
+      ]
+      const recoveryErrors: Array<{ label: string; error: unknown }> = []
       let recoveredPath: string | undefined
-      for (const candidate of [this.backupPath, this.previousBackupPath]) {
+      let recoveredLabel = ''
+      for (const candidate of candidates) {
         try {
-          loaded = await this.readStore(candidate)
-          recoveredPath = candidate
+          loaded = await this.readStore(candidate.path)
+          recoveredPath = candidate.path
+          recoveredLabel = candidate.label
           break
         } catch (error) {
-          recoveryErrors.push(error)
+          recoveryErrors.push({ label: candidate.label, error })
         }
       }
-      const firstRun = (primaryError as NodeJS.ErrnoException | undefined)?.code === 'ENOENT'
-        && recoveryErrors.length === 2
-        && recoveryErrors.every((error) => (error as NodeJS.ErrnoException).code === 'ENOENT')
-      if (!loaded && !firstRun) {
-        throw new Error(`环境元数据及备份均无法读取：${primaryError instanceof Error ? primaryError.message : String(primaryError)}`)
+      const firstRun = primaryMissing
+        && recoveryErrors.length === candidates.length
+        && recoveryErrors.every(({ error }) => (error as NodeJS.ErrnoException).code === 'ENOENT')
+      for (const { label, error } of recoveryErrors) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') issues.push(`${label}不可用：${describe(error)}`)
       }
+
       if (loaded && recoveredPath) {
         this.preservePreviousBackupOnce = true
         let corruptFilePath: string | undefined
-        if ((primaryError as NodeJS.ErrnoException | undefined)?.code !== 'ENOENT') {
+        if (!primaryMissing) {
           corruptFilePath = join(this.vaultPath, `profiles.corrupt-${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
           await rename(this.profilesPath, corruptFilePath)
         }
+        // 备份可能比磁盘上的环境目录旧（例如恢复自较早的快照）：把没有记录的环境目录接回来
+        const adopted = await this.adoptOrphanDirectories(loaded, issues)
         this.health = {
           recoveredFromBackup: true,
-          recoveryMessage: `主环境配置不可用，已从${recoveredPath === this.backupPath ? '最近备份' : '上一份备份'}恢复`,
+          recoveryMessage: `主环境配置不可用，已从${recoveredLabel}恢复`
+            + (adopted ? `；并从磁盘数据重建了 ${adopted} 个备份之后创建的环境（名称、代理等配置可能丢失，请检查）` : ''),
+          corruptFilePath,
+          backupHealthy: true
+        }
+      } else if (!loaded && !firstRun) {
+        // 最后手段：所有副本都不可用。绝不因元数据损坏而无法启动，也不丢弃任何文件。
+        const corruptFilePath = await this.quarantineUnreadableMetadata(primaryMissing)
+        loaded = { profiles: [], nextSerialNumber: 1 }
+        const adopted = await this.adoptOrphanDirectories(loaded, issues)
+        this.preservePreviousBackupOnce = false
+        this.health = {
+          recoveredFromBackup: true,
+          recoveryMessage: adopted
+            ? `环境元数据及所有备份均已损坏，已从磁盘数据重建 ${adopted} 个环境：名称、分组、扩展和代理配置已丢失，请逐个检查并重新设置代理后再打开（重建的环境带有“已恢复”标签）`
+            : '环境元数据及所有备份均已损坏，且磁盘上没有可重建的环境数据，已以空列表启动；损坏的文件已原样保留',
           corruptFilePath,
           backupHealthy: true
         }
@@ -151,9 +189,58 @@ export class ProfileStore {
     this.nextSerialNumber = loaded?.nextSerialNumber ?? 1
     for (const profile of loaded?.profiles ?? []) {
       this.profiles.set(profile.id, profile)
-      await this.ensureProfileDirectories(profile.id)
+      try {
+        await this.ensureProfileDirectories(profile.id)
+      } catch (error) {
+        // 单个环境的数据目录异常只影响该环境（启动前仍会再次校验），不能拖垮整个应用
+        profile.status = 'error'
+        profile.lastError = describe(error)
+        issues.push(`环境 ${profile.id.slice(0, 8)}：${describe(error)}`)
+      }
     }
+    if (issues.length) this.health = { ...this.health, issues }
     await this.persist()
+  }
+
+  /** 把磁盘上存在、但元数据里没有记录的环境目录重建回来。返回接回的数量。 */
+  private async adoptOrphanDirectories(loaded: LoadedStore, issues: string[]): Promise<number> {
+    const scan = await scanOrphanProfileDirectories(this.vaultPath, new Set(loaded.profiles.map((profile) => profile.id)))
+    issues.push(...scan.issues)
+    const used = new Set(loaded.profiles.map((profile) => profile.serialNumber))
+    let next = Math.max(loaded.nextSerialNumber, ...used, 0) + 1
+    const pending: Array<{ id: string; hints?: typeof scan.found[number]['hints'] }> = []
+    for (const orphan of scan.found) {
+      const wanted = orphan.hints?.serialNumber
+      if (usableSerial(wanted, used)) {
+        used.add(wanted)
+        loaded.profiles.push(rebuildProfile(orphan, wanted))
+      } else {
+        pending.push(orphan)
+      }
+    }
+    for (const orphan of pending) {
+      while (used.has(next)) next += 1
+      used.add(next)
+      loaded.profiles.push(rebuildProfile(orphan, next))
+    }
+    let highest = 0
+    for (const serial of used) highest = Math.max(highest, serial)
+    loaded.nextSerialNumber = Math.max(loaded.nextSerialNumber, highest + 1)
+    return scan.found.length
+  }
+
+  /** 把无法读取的元数据文件原样保存到 profiles.corrupt-*，供日后人工检查。 */
+  private async quarantineUnreadableMetadata(primaryMissing: boolean): Promise<string | undefined> {
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+    let corruptFilePath: string | undefined
+    if (!primaryMissing) {
+      corruptFilePath = join(this.vaultPath, `profiles.corrupt-${stamp}.json`)
+      await rename(this.profilesPath, corruptFilePath)
+    }
+    for (const [source, suffix] of [[this.backupPath, 'backup'], [this.previousBackupPath, 'previous']] as const) {
+      await copyFile(source, join(this.vaultPath, `profiles.corrupt-${stamp}.${suffix}.json`)).catch(() => undefined)
+    }
+    return corruptFilePath
   }
 
   storageHealth(): ProfileStoreHealth {
@@ -708,10 +795,62 @@ export class ProfileStore {
       } satisfies ProfileOwnerMarker, null, 2), { encoding: 'utf8', mode: 0o600, flag: 'wx' })
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+      await this.repairUnreadableOwnerMarker(id)
     }
     await mkdir(this.profileDataPath(id), { recursive: true })
     await mkdir(this.profileRuntimePath(id), { recursive: true })
     await this.verifyProfileDataIdentity(id)
+  }
+
+  /**
+   * 身份标记只是一个很小的文件，断电后可能变成空洞/损坏。目录名就是环境 ID，
+   * 标记无法解析时可以安全重写；能解析但指向别的环境则保持拒绝（目录可能被移动过）。
+   */
+  private async repairUnreadableOwnerMarker(id: string): Promise<void> {
+    try {
+      JSON.parse(await readFile(this.profileOwnerPath(id), 'utf8'))
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        await writeFileAtomicDurable(this.profileOwnerPath(id), JSON.stringify({
+          schemaVersion: 1,
+          profileId: id
+        } satisfies ProfileOwnerMarker, null, 2))
+      } else if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw error
+      }
+    }
+  }
+
+  private async listSnapshots(): Promise<Array<{ name: string; path: string }>> {
+    let names: string[]
+    try {
+      names = await readdir(this.snapshotsPath)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
+      throw error
+    }
+    // 文件名含 ISO 时间戳，按名称倒序即为从新到旧
+    return names
+      .filter((name) => name.startsWith(SNAPSHOT_PREFIX) && name.endsWith(SNAPSHOT_SUFFIX))
+      .sort()
+      .reverse()
+      .map((name) => ({ name, path: join(this.snapshotsPath, name) }))
+  }
+
+  private async writeSnapshotIfDue(serialized: string): Promise<void> {
+    const snapshots = await this.listSnapshots()
+    const newest = snapshots[0]
+    if (newest) {
+      const stamp = newest.name.slice(SNAPSHOT_PREFIX.length, -SNAPSHOT_SUFFIX.length)
+      const time = Date.parse(stamp.replace(/^(\d{4}-\d{2}-\d{2}T\d{2})-(\d{2})-(\d{2})-(\d{3})Z$/, '$1:$2:$3.$4Z'))
+      if (Number.isFinite(time) && Date.now() - time < SNAPSHOT_MIN_INTERVAL_MS) return
+    }
+    await mkdir(this.snapshotsPath, { recursive: true })
+    const name = `${SNAPSHOT_PREFIX}${new Date().toISOString().replace(/[:.]/g, '-')}${SNAPSHOT_SUFFIX}`
+    await writeFileAtomicDurable(join(this.snapshotsPath, name), serialized)
+    for (const stale of snapshots.slice(SNAPSHOT_KEEP - 1)) {
+      await rm(stale.path, { force: true }).catch(() => undefined)
+    }
   }
 
   private persist(): Promise<void> {
@@ -723,31 +862,40 @@ export class ProfileStore {
         proxy: { ...profile.proxy, password: this.secrets.encode(profile.proxy.password) }
       }))
     }
+    const serialized = JSON.stringify(data, null, 2)
     const operation = this.writeQueue.catch(() => undefined).then(async () => {
       await mkdir(dirname(this.profilesPath), { recursive: true })
-      const temporary = `${this.profilesPath}.tmp`
-      await writeFile(temporary, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 })
-      await rename(temporary, this.profilesPath)
-      const backupTemporary = `${this.backupPath}.tmp`
+      await writeFileAtomicDurable(this.profilesPath, serialized)
       try {
         if (!this.preservePreviousBackupOnce) {
-          try {
-            await copyFile(this.backupPath, this.previousBackupPath)
-          } catch (error) {
-            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+          // 仅当最近备份本身有效时才轮转，避免把损坏的备份覆盖掉仅存的好副本
+          const currentBackup = await readFile(this.backupPath).catch((error: NodeJS.ErrnoException) => {
+            if (error.code === 'ENOENT') return undefined
+            throw error
+          })
+          if (currentBackup && await this.readStore(this.backupPath).then(() => true, () => false)) {
+            await writeFileAtomicDurable(this.previousBackupPath, currentBackup)
           }
         }
-        await copyFile(this.profilesPath, backupTemporary)
-        await rm(this.backupPath, { force: true })
-        await rename(backupTemporary, this.backupPath)
+        await writeFileAtomicDurable(this.backupPath, serialized)
         this.preservePreviousBackupOnce = false
         this.health = { ...this.health, backupHealthy: true, backupError: undefined }
       } catch (error) {
-        await rm(backupTemporary, { force: true }).catch(() => undefined)
         this.health = {
           ...this.health,
           backupHealthy: false,
           backupError: error instanceof Error ? error.message : String(error)
+        }
+      }
+      try {
+        await this.writeSnapshotIfDue(serialized)
+      } catch (error) {
+        if (this.health.backupHealthy) {
+          this.health = {
+            ...this.health,
+            backupHealthy: false,
+            backupError: `历史快照写入失败：${error instanceof Error ? error.message : String(error)}`
+          }
         }
       }
     })

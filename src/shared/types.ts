@@ -283,6 +283,8 @@ export interface ProfileStoreHealth {
   corruptFilePath?: string
   backupHealthy: boolean
   backupError?: string
+  /** 启动时发现的、已被隔离或修复的问题（不影响应用启动）。 */
+  issues?: string[]
 }
 
 export type LaunchDiagnosticStatus = 'pass' | 'warning' | 'error'

@@ -85,17 +85,29 @@ app.whenReady().then(async () => {
     logger.error('检测到上次 Prism Browser 未正常退出', appSessionSnapshot.previousUnclean)
   }
   await Promise.all([profiles.initialize(), settings.initialize(), extensions.initialize()])
-  const kernelMigration = await migrateMacLegacyKernelSelection(settings, vaultPath)
-  if (kernelMigration.migrated) {
-    logger.info('已将 macOS 旧版托管内核切换为应用内置新版内核', {
-      previousVersion: kernelMigration.previousVersion,
-      bundledVersion: kernelMigration.bundledVersion
-    })
+  const settingsRecovery = settings.recoveryMessage()
+  if (settingsRecovery) logger.error('应用设置已恢复为默认', settingsRecovery)
+  // 以下步骤不是启动所必需，失败只记录日志，不能让应用打不开
+  try {
+    const kernelMigration = await migrateMacLegacyKernelSelection(settings, vaultPath)
+    if (kernelMigration.migrated) {
+      logger.info('已将 macOS 旧版托管内核切换为应用内置新版内核', {
+        previousVersion: kernelMigration.previousVersion,
+        bundledVersion: kernelMigration.bundledVersion
+      })
+    }
+  } catch (error) {
+    logger.error('macOS 内核迁移失败，已跳过', error)
   }
-  const purgedTrashCount = await profiles.purgeTrashOlderThan(settings.get().recycleRetentionDays)
-  if (purgedTrashCount) logger.info('已按保留策略自动清理环境回收站', { count: purgedTrashCount })
+  try {
+    const purgedTrashCount = await profiles.purgeTrashOlderThan(settings.get().recycleRetentionDays)
+    if (purgedTrashCount) logger.info('已按保留策略自动清理环境回收站', { count: purgedTrashCount })
+  } catch (error) {
+    logger.error('自动清理环境回收站失败，已跳过', error)
+  }
   const profileStorageHealth = profiles.storageHealth()
   if (profileStorageHealth.recoveredFromBackup) logger.error('环境元数据已从备份恢复', profileStorageHealth)
+  if (profileStorageHealth.issues?.length) logger.error('环境元数据启动时发现问题', profileStorageHealth.issues)
   if (!profileStorageHealth.backupHealthy) logger.error('环境元数据备份不可用', profileStorageHealth.backupError)
   logger.info('Prism Browser 已启动', { version: app.getVersion(), platform: process.platform, arch: process.arch })
 
@@ -120,10 +132,24 @@ app.whenReady().then(async () => {
 }).catch(async (error) => {
   logger?.error('Prism Browser 启动失败', error)
   await logger?.flush()
-  dialog.showErrorBox(
-    'Prism Browser 无法启动',
-    '应用启动失败，但现有环境数据没有被修改。请重新启动；如仍然失败，请查看日志文件。'
-  )
+  const vaultDirectory = join(app.getPath('userData'), 'vault')
+  const reason = error instanceof Error ? error.message : String(error)
+  const { response } = await dialog.showMessageBox({
+    type: 'error',
+    title: 'Prism Browser 无法启动',
+    message: 'Prism Browser 无法启动',
+    detail: [
+      '现有环境数据没有被修改，请不要删除整个数据目录。',
+      `原因：${reason.slice(0, 600)}`,
+      `数据目录：${vaultDirectory}`,
+      '重新启动不会改变结果。请先备份该目录，再查看其中的日志与 profiles.json 相关文件。'
+    ].join('\n\n'),
+    buttons: ['打开数据目录', '退出'],
+    defaultId: 1,
+    cancelId: 1,
+    noLink: true
+  }).catch(() => ({ response: 1 }))
+  if (response === 0) await shell.openPath(vaultDirectory)
   app.quit()
 })
 
